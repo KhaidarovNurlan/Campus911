@@ -1,0 +1,58 @@
+name: campus911
+description: "Приложение для студентов"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.9.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Основные
+  cupertino_icons: ^1.0.8
+  google_fonts: ^6.2.1
+
+  # Навигация
+  go_router: ^14.6.2
+
+  # Анимации
+  flutter_animate: ^4.5.0
+  lottie: ^3.1.2
+
+  # UI
+  shimmer: ^3.0.0
+  smooth_page_indicator: ^1.2.0
+  flutter_rating_bar: ^4.0.1
+
+  # Чаты
+  dash_chat_2: ^0.0.21
+
+  # Календарь
+  table_calendar: ^3.1.2
+
+  # Графики
+  fl_chart: ^0.69.0
+
+  # Формы
+  image_picker: ^1.1.2
+
+  # Уведомления
+  flutter_local_notifications: ^18.0.1
+
+  # State
+  provider: ^6.1.2
+
+  # Utils
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  # assets:
+  #   - assets/images/
+  #   - assets/lottie/
