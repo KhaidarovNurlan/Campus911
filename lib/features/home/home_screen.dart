@@ -90,6 +90,9 @@ class _HomeTabState extends State<_HomeTab> {
     final newsProvider = context.watch<NewsProvider>();
     final expenseProvider = context.watch<ExpenseProvider>();
 
+    final todayIndex = DateTime.now().weekday;
+    final today = AppConstants.weekDays[todayIndex - 1];
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Campus911'),
@@ -153,7 +156,7 @@ class _HomeTabState extends State<_HomeTab> {
               ),
               const SizedBox(height: 12),
               _TodaySchedule(
-                lessons: scheduleProvider.getLessonsForDay('Понедельник'),
+                lessons: scheduleProvider.getLessonsForDay(today),
                 isLoading: _isLoading,
               ),
               const SizedBox(height: 24),

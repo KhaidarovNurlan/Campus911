@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../app/theme/app_colors.dart';
 import '../../core/constants.dart';
 import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/custom_text_field.dart';
-import '../../data/models.dart';
-import '../../data/providers.dart';
 
 /// 🔐 Экран авторизации с онбордингом
 class AuthScreen extends StatefulWidget {
@@ -244,33 +243,61 @@ class _AuthFormState extends State<_AuthForm> {
 
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
 
-    // Имитация регистрации (задержка 2 сек)
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      // ✅ Создаём пользователя в Firebase Auth
+      final userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password:
+                '12345678', // временно фиксированный пароль, можешь добавить поле ввода
+          );
 
-    if (!mounted) return;
+      final user = userCredential.user;
 
-    // Создаём пользователя
-    final user = UserModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      name: _nameController.text,
-      email: _emailController.text,
-      phone: _phoneController.text,
-      university: _university,
-      gender: _gender,
-      role: _role,
-    );
+      if (user != null) {
+        // ✅ Сохраняем дополнительные данные в Firestore
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          'name': _nameController.text.trim(),
+          'email': _emailController.text.trim(),
+          'phone': _phoneController.text.trim(),
+          'university': _university,
+          'gender': _gender,
+          'role': _role,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
 
-    // Сохраняем в провайдере
-    context.read<UserProvider>().setUser(user);
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Регистрация успешна!')));
 
-    setState(() => _isLoading = false);
+        context.go('/home');
+      }
+    } on FirebaseAuthException catch (e) {
+      String message = 'Ошибка регистрации';
+      if (e.code == 'email-already-in-use') {
+        message = 'Этот email уже используется';
+      } else if (e.code == 'invalid-email') {
+        message = 'Некорректный email';
+      } else if (e.code == 'weak-password') {
+        message = 'Пароль слишком слабый';
+      }
 
-    // Переходим на главный экран
-    if (mounted) {
-      context.go('/home');
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Ошибка: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

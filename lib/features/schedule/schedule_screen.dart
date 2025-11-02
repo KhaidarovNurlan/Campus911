@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
@@ -8,6 +9,7 @@ import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/custom_text_field.dart';
 import '../../data/models.dart';
 import '../../data/providers.dart';
+import '../../services/firestore_service.dart';
 
 /// 📅 Экран расписания
 class ScheduleScreen extends StatefulWidget {
@@ -36,6 +38,19 @@ class _ScheduleScreenState extends State<ScheduleScreen>
         );
       }
     });
+
+    _loadLessons();
+  }
+
+  Future<void> _loadLessons() async {
+    final firestore = FirestoreService();
+    final lessons = await firestore.getLessons();
+    final provider = context.read<ScheduleProvider>();
+
+    provider.clearLessons();
+    for (var lesson in lessons) {
+      provider.addLesson(lesson);
+    }
   }
 
   @override
@@ -52,6 +67,10 @@ class _ScheduleScreenState extends State<ScheduleScreen>
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () => context.go('/home'),
+        ),
         title: const Text('Расписание'),
         bottom: TabBar(
           controller: _tabController,
@@ -574,7 +593,7 @@ class _AddLessonBottomSheetState extends State<_AddLessonBottomSheet> {
     );
   }
 
-  void _saveLesson() {
+  Future<void> _saveLesson() async {
     if (!_formKey.currentState!.validate()) return;
 
     final now = DateTime.now();
@@ -605,6 +624,9 @@ class _AddLessonBottomSheetState extends State<_AddLessonBottomSheet> {
     );
 
     context.read<ScheduleProvider>().addLesson(lesson);
+
+    final firestore = FirestoreService();
+    await firestore.addLesson(lesson);
 
     Navigator.pop(context);
 
@@ -814,8 +836,13 @@ class _LessonOptionsSheet extends StatelessWidget {
             child: const Text('Отмена'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
+              // ← делаем асинхронной
               context.read<ScheduleProvider>().deleteLesson(lesson.id);
+
+              final firestore = FirestoreService();
+              await firestore.deleteLesson(lesson.id);
+
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(

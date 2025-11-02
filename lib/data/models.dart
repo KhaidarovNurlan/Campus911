@@ -25,18 +25,6 @@ class UserModel {
 
   bool get isHeadman => role == 'headman';
   bool get isStudent => role == 'student';
-
-  // Mock пользователь для тестов
-  static UserModel mock() => UserModel(
-        id: '1',
-        name: 'Алексей Иванов',
-        email: 'ivanov@aitu.edu.kz',
-        phone: '+7 (777) 123-45-67',
-        university: 'AITU',
-        gender: 'Мужской',
-        role: 'student',
-        photoUrl: null,
-      );
 }
 
 // ========== SCHEDULE MODEL ==========
@@ -234,7 +222,8 @@ class NewsModel {
   final String id;
   final String title;
   final String content;
-  final String category; // 'academic', 'events', 'achievements', 'announcements'
+  final String
+  category; // 'academic', 'events', 'achievements', 'announcements'
   final DateTime date;
   final String? imageUrl;
   final String university;
@@ -353,6 +342,6 @@ class AttendanceRecordModel {
 
   int get presentCount => students.where((s) => s.isPresent).length;
   int get absentCount => students.where((s) => !s.isPresent).length;
-  double get attendancePercentage => 
+  double get attendancePercentage =>
       students.isEmpty ? 0 : (presentCount / students.length) * 100;
 }

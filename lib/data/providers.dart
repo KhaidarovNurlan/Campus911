@@ -83,6 +83,11 @@ class ScheduleProvider extends ChangeNotifier {
     return _lessons.where((lesson) => lesson.dayOfWeek == day).toList();
   }
 
+  void clearLessons() {
+    _lessons.clear();
+    notifyListeners();
+  }
+
   void setSelectedDay(String day) {
     _selectedDay = day;
     notifyListeners();
