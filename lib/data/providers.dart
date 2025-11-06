@@ -370,16 +370,36 @@ class NewsProvider extends ChangeNotifier {
 }
 
 class CalendarProvider extends ChangeNotifier {
-  final List<EventModel> _events = MockData.events;
+  final List<EventModel> _events = [];
+  final _firestoreService = FirestoreService();
+
   DateTime _selectedDate = DateTime.now();
+
   List<EventModel> get events => _events;
   DateTime get selectedDate => _selectedDate;
-  List<EventModel> getEventsForDate(DateTime date) {
-    return _events.where((event) {
-      return event.date.year == date.year &&
-          event.date.month == date.month &&
-          event.date.day == date.day;
-    }).toList();
+
+  CalendarProvider() {
+    loadEvents();
+  }
+
+  Future<void> loadEvents() async {
+    final events = await _firestoreService.getAllEvents();
+    _events
+      ..clear()
+      ..addAll(events);
+    notifyListeners();
+  }
+
+  Future<void> addEvent(EventModel event) async {
+    await _firestoreService.addEvent(event);
+    _events.add(event);
+    notifyListeners();
+  }
+
+  Future<void> deleteEvent(String id) async {
+    await _firestoreService.deleteEvent(id);
+    _events.removeWhere((e) => e.id == id);
+    notifyListeners();
   }
 
   void setSelectedDate(DateTime date) {
@@ -387,48 +407,93 @@ class CalendarProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addEvent(EventModel event) {
-    _events.add(event);
-    notifyListeners();
-  }
-
-  void deleteEvent(String id) {
-    _events.removeWhere((event) => event.id == id);
-    notifyListeners();
+  List<EventModel> getEventsForDate(DateTime date) {
+    return _events.where((event) {
+      return event.date.year == date.year &&
+          event.date.month == date.month &&
+          event.date.day == date.day;
+    }).toList();
   }
 }
 
 class ReviewProvider extends ChangeNotifier {
-  final List<TeacherModel> _teachers = MockData.teachers;
+  final _firestore = FirestoreService();
+
+  final List<TeacherModel> _teachers = [
+    TeacherModel(
+      id: '1',
+      name: 'Арсен Тимурович',
+      subject: 'Мобилка',
+      rating: 5,
+      reviewCount: 0,
+      photoUrl: null,
+    ),
+    TeacherModel(
+      id: '2',
+      name: 'Mr. Sintikov',
+      subject: 'Arduino',
+      rating: 5,
+      reviewCount: 0,
+      photoUrl: null,
+    ),
+    TeacherModel(
+      id: '3',
+      name: 'Алмас Айдарович',
+      subject: 'Джава',
+      rating: 5,
+      reviewCount: 0,
+      photoUrl: null,
+    ),
+  ];
   final Map<String, List<ReviewModel>> _reviews = {};
+
   List<TeacherModel> get teachers => _teachers;
+
   List<ReviewModel> getReviewsForTeacher(String teacherId) {
-    if (!_reviews.containsKey(teacherId)) {
-      _reviews[teacherId] = MockData.getReviewsForTeacher(teacherId);
-    }
-    return _reviews[teacherId]!;
+    return _reviews[teacherId] ?? [];
   }
 
-  void addReview(ReviewModel review) {
-    if (!_reviews.containsKey(review.teacherId)) {
-      _reviews[review.teacherId] = [];
+  Future<void> loadData() async {
+    // _teachers = await _firestore.getTeachers();
+    final allReviews = await _firestore.getReviews();
+
+    for (final review in allReviews) {
+      _reviews.putIfAbsent(review.teacherId, () => []).add(review);
     }
-    _reviews[review.teacherId]!.insert(0, review);
+
+    for (var i = 0; i < _teachers.length; i++) {
+      final teacher = _teachers[i];
+      final teacherReviews = _reviews[teacher.id] ?? [];
+      if (teacherReviews.isNotEmpty) {
+        final avg =
+            teacherReviews.map((r) => r.rating).reduce((a, b) => a + b) /
+            teacherReviews.length;
+        _teachers[i] = teacher.copyWith(
+          rating: avg,
+          reviewCount: teacherReviews.length,
+        );
+      }
+    }
+
+    notifyListeners();
+  }
+
+  Future<void> addReview(ReviewModel review) async {
+    await _firestore.addReview(review);
+
+    _reviews.putIfAbsent(review.teacherId, () => []).insert(0, review);
     final teacherIndex = _teachers.indexWhere((t) => t.id == review.teacherId);
     if (teacherIndex != -1) {
       final allReviews = _reviews[review.teacherId]!;
       final avgRating =
           allReviews.fold<double>(0, (sum, r) => sum + r.rating) /
           allReviews.length;
-      _teachers[teacherIndex] = TeacherModel(
-        id: _teachers[teacherIndex].id,
-        name: _teachers[teacherIndex].name,
-        subject: _teachers[teacherIndex].subject,
+      _teachers[teacherIndex] = _teachers[teacherIndex].copyWith(
         rating: avgRating,
         reviewCount: allReviews.length,
-        photoUrl: _teachers[teacherIndex].photoUrl,
       );
     }
+
     notifyListeners();
   }
 }
@@ -475,7 +540,9 @@ class AppProviders {
     ChangeNotifierProvider<ExpenseProvider>(create: (_) => ExpenseProvider()),
     ChangeNotifierProvider<NewsProvider>(create: (_) => NewsProvider()),
     ChangeNotifierProvider<CalendarProvider>(create: (_) => CalendarProvider()),
-    ChangeNotifierProvider<ReviewProvider>(create: (_) => ReviewProvider()),
+    ChangeNotifierProvider<ReviewProvider>(
+      create: (_) => ReviewProvider()..loadData(),
+    ),
     ChangeNotifierProvider<AttendanceProvider>(
       create: (_) => AttendanceProvider(),
     ),

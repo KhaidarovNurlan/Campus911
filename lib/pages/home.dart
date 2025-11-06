@@ -19,9 +19,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<Widget> _screens = [
     const _HomeTab(),
-    const _ScheduleTab(),
+    const _CalendarTab(),
     const _ChatsTab(),
-    const _ExpensesTab(),
+    const _ReviewsTab(),
     const _ProfileTab(),
   ];
 
@@ -38,16 +38,16 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Главная',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today_rounded),
-            label: 'Расписание',
+            icon: Icon(Icons.calendar_month_rounded),
+            label: 'Календарь',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.chat_bubble_rounded),
             label: 'Чаты',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.account_balance_wallet_rounded),
-            label: 'Расходы',
+            icon: Icon(Icons.reviews_rounded),
+            label: 'Отзывы',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_rounded),
@@ -613,24 +613,28 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        children: [
-          Icon(
-            icon,
-            size: 64,
-            color: AppColors.textGrey.withValues(alpha: 0.5),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            message,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: AppColors.textGrey),
-            textAlign: TextAlign.center,
-          ),
-        ],
+    return Center(
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 64,
+              color: AppColors.textGrey.withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.textGrey),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -663,28 +667,28 @@ class _ShimmerBox extends StatelessWidget {
   }
 }
 
-class _ScheduleTab extends StatelessWidget {
-  const _ScheduleTab();
+class _CalendarTab extends StatelessWidget {
+  const _CalendarTab();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Расписание')),
+      appBar: AppBar(title: const Text('Календарь')),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(
-              Icons.calendar_today_rounded,
+              Icons.calendar_month_rounded,
               size: 64,
               color: AppColors.textGrey,
             ),
             const SizedBox(height: 16),
-            const Text('Экран расписания'),
+            const Text('Экран календаря'),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () => context.go('/schedule'),
-              child: const Text('Открыть полное расписание'),
+              onPressed: () => context.go('/calendar'),
+              child: const Text('Открыть календарь событий'),
             ),
           ],
         ),
@@ -723,28 +727,31 @@ class _ChatsTab extends StatelessWidget {
   }
 }
 
-class _ExpensesTab extends StatelessWidget {
-  const _ExpensesTab();
+class _ReviewsTab extends StatelessWidget {
+  const _ReviewsTab();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Расходы')),
+      appBar: AppBar(title: const Text('Отзывы')),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(
-              Icons.account_balance_wallet_rounded,
+              Icons.reviews_rounded,
               size: 64,
               color: AppColors.textGrey,
             ),
             const SizedBox(height: 16),
-            const Text('Экран расходов'),
+            const Text(
+              'Экран отзывов преподавателей',
+              style: TextStyle(fontSize: 16),
+            ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () => context.go('/expenses'),
-              child: const Text('Открыть трекер расходов'),
+              onPressed: () => context.go('/reviews'),
+              child: const Text('Посмотреть отзывы'),
             ),
           ],
         ),

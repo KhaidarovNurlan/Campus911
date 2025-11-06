@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:intl/intl.dart';
 
-import '../../theme/colors.dart';
-import '../../core/constants.dart';
-import '../../core/widgets/custom_button.dart';
-import '../../core/widgets/custom_text_field.dart';
-import '../../data/models.dart';
-import '../../data/providers.dart';
+import '../theme/colors.dart';
+import '../core/constants.dart';
+import '../theme/custom_button.dart';
+import '../theme/custom_text_field.dart';
+import '../data/models.dart';
+import '../data/providers.dart';
 
-/// ⭐ Экран отзывов о преподавателях
 class ReviewsScreen extends StatefulWidget {
   const ReviewsScreen({super.key});
 
@@ -19,7 +19,7 @@ class ReviewsScreen extends StatefulWidget {
 }
 
 class _ReviewsScreenState extends State<ReviewsScreen> {
-  String _sortBy = 'rating'; // rating, reviews, name
+  String _sortBy = 'rating';
 
   @override
   Widget build(BuildContext context) {
@@ -78,8 +78,6 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
   }
 }
 
-// ========== КАРТОЧКА ПРЕПОДАВАТЕЛЯ ==========
-
 class _TeacherCard extends StatelessWidget {
   final TeacherModel teacher;
 
@@ -111,11 +109,8 @@ class _TeacherCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  // Аватар
                   _TeacherAvatar(name: teacher.name),
                   const SizedBox(width: 16),
-
-                  // Информация
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -161,14 +156,10 @@ class _TeacherCard extends StatelessWidget {
                       ],
                     ),
                   ),
-
-                  // Стрелка
                   Icon(Icons.chevron_right_rounded, color: AppColors.textGrey),
                 ],
               ),
               const SizedBox(height: 16),
-
-              // Рейтинг бар
               _RatingBar(rating: teacher.rating),
             ],
           ),
@@ -194,7 +185,6 @@ class _TeacherCard extends StatelessWidget {
   }
 }
 
-// Аватар преподавателя
 class _TeacherAvatar extends StatelessWidget {
   final String name;
 
@@ -234,7 +224,6 @@ class _TeacherAvatar extends StatelessWidget {
   }
 }
 
-// Визуальный рейтинг бар
 class _RatingBar extends StatelessWidget {
   final double rating;
 
@@ -260,7 +249,6 @@ class _RatingBar extends StatelessWidget {
   }
 }
 
-// Пустой список
 class _EmptyTeachers extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -295,8 +283,6 @@ class _EmptyTeachers extends StatelessWidget {
   }
 }
 
-// ========== ДЕТАЛЬНАЯ СТРАНИЦА ПРЕПОДАВАТЕЛЯ ==========
-
 class _TeacherDetailsScreen extends StatefulWidget {
   final TeacherModel teacher;
 
@@ -307,7 +293,7 @@ class _TeacherDetailsScreen extends StatefulWidget {
 }
 
 class _TeacherDetailsScreenState extends State<_TeacherDetailsScreen> {
-  String _filterRating = 'all'; // all, 5, 4, 3, 2, 1
+  String _filterRating = 'all';
 
   @override
   Widget build(BuildContext context) {
@@ -316,13 +302,17 @@ class _TeacherDetailsScreenState extends State<_TeacherDetailsScreen> {
     final filteredReviews = _filterReviews(reviews);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Отзывы')),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () => context.go('/home'),
+        ),
+        title: const Text('Отзывы'),
+      ),
       body: Column(
         children: [
-          // Заголовок с информацией
           _TeacherHeader(teacher: widget.teacher),
 
-          // Фильтр по звёздам
           _StarFilter(
             selectedRating: _filterRating,
             onRatingChanged: (rating) => setState(() => _filterRating = rating),
@@ -330,7 +320,6 @@ class _TeacherDetailsScreenState extends State<_TeacherDetailsScreen> {
 
           const Divider(height: 1),
 
-          // Список отзывов
           Expanded(
             child: filteredReviews.isEmpty
                 ? _EmptyReviews()
@@ -369,7 +358,6 @@ class _TeacherDetailsScreenState extends State<_TeacherDetailsScreen> {
   }
 }
 
-// Заголовок с преподавателем
 class _TeacherHeader extends StatelessWidget {
   final TeacherModel teacher;
 
@@ -438,7 +426,6 @@ class _TeacherHeader extends StatelessWidget {
   }
 }
 
-// Фильтр по звёздам
 class _StarFilter extends StatelessWidget {
   final String selectedRating;
   final ValueChanged<String> onRatingChanged;
@@ -523,7 +510,6 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-// Карточка отзыва
 class _ReviewCard extends StatelessWidget {
   final ReviewModel review;
 
@@ -603,7 +589,6 @@ class _ReviewCard extends StatelessWidget {
   }
 }
 
-// Пустые отзывы
 class _EmptyReviews extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -632,8 +617,6 @@ class _EmptyReviews extends StatelessWidget {
     );
   }
 }
-
-// ========== ДОБАВЛЕНИЕ ОТЗЫВА ==========
 
 class _AddReviewBottomSheet extends StatefulWidget {
   final TeacherModel teacher;
@@ -678,7 +661,6 @@ class _AddReviewBottomSheetState extends State<_AddReviewBottomSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Заголовок
               Row(
                 children: [
                   Container(
@@ -717,7 +699,6 @@ class _AddReviewBottomSheetState extends State<_AddReviewBottomSheet> {
               ),
               const SizedBox(height: 24),
 
-              // Рейтинг
               Center(
                 child: Column(
                   children: [
@@ -757,7 +738,6 @@ class _AddReviewBottomSheetState extends State<_AddReviewBottomSheet> {
               ),
               const SizedBox(height: 24),
 
-              // Комментарий
               CustomTextField(
                 label: 'Комментарий',
                 hint: 'Поделитесь своим мнением...',
@@ -776,7 +756,6 @@ class _AddReviewBottomSheetState extends State<_AddReviewBottomSheet> {
               ),
               const SizedBox(height: 16),
 
-              // Анонимно
               SwitchListTile(
                 value: _isAnonymous,
                 onChanged: (value) => setState(() => _isAnonymous = value),
@@ -794,7 +773,6 @@ class _AddReviewBottomSheetState extends State<_AddReviewBottomSheet> {
               ),
               const SizedBox(height: 24),
 
-              // Кнопка отправки
               CustomButton(
                 text: 'Отправить',
                 onPressed: () => _submitReview(userProvider),

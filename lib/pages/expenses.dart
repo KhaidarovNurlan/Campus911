@@ -7,8 +7,8 @@ import 'package:fl_chart/fl_chart.dart';
 
 import '../theme/colors.dart';
 import '../core/constants.dart';
-import '../core/widgets/custom_button.dart';
-import '../core/widgets/custom_text_field.dart';
+import '../theme/custom_button.dart';
+import '../theme/custom_text_field.dart';
 import '../data/models.dart';
 import '../data/providers.dart';
 

@@ -7,8 +7,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../theme/colors.dart';
 import '../core/constants.dart';
-import '../core/widgets/custom_button.dart';
-import '../core/widgets/custom_text_field.dart';
+import '../theme/custom_button.dart';
+import '../theme/custom_text_field.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});

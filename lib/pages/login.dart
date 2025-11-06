@@ -3,8 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 
-import '../core/widgets/custom_button.dart';
-import '../core/widgets/custom_text_field.dart';
+import '../theme/custom_button.dart';
+import '../theme/custom_text_field.dart';
 import '../data/user_service.dart';
 import '../data/providers.dart';
 

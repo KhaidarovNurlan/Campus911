@@ -113,4 +113,50 @@ class FirestoreService {
   Future<void> deleteLesson(String id) async {
     await _db.collection('schedule').doc(id).delete();
   }
+
+  Future<List<TeacherModel>> getTeachers() async {
+    final snapshot = await _db.collection('teachers').get();
+    return snapshot.docs
+        .map((doc) => TeacherModel.fromMap({...doc.data(), 'id': doc.id}))
+        .toList();
+  }
+
+  Future<List<ReviewModel>> getReviews() async {
+    final snapshot = await _db.collection('reviews').get();
+    return snapshot.docs
+        .map((doc) => ReviewModel.fromMap({...doc.data(), 'id': doc.id}))
+        .toList();
+  }
+
+  Future<void> addReview(ReviewModel review) async {
+    await _db.collection('reviews').add(review.toMap());
+  }
+
+  Future<List<EventModel>> getAllEvents() async {
+    try {
+      final snapshot = await _db.collection('events').get();
+      return snapshot.docs
+          .map((doc) => EventModel.fromMap(doc.data(), doc.id))
+          .toList();
+    } catch (e) {
+      print('Ошибка загрузки событий: $e');
+      return [];
+    }
+  }
+
+  Future<void> addEvent(EventModel event) async {
+    try {
+      await _db.collection('events').doc(event.id).set(event.toMap());
+    } catch (e) {
+      print('Ошибка добавления события: $e');
+    }
+  }
+
+  Future<void> deleteEvent(String id) async {
+    try {
+      await _db.collection('events').doc(id).delete();
+    } catch (e) {
+      print('Ошибка удаления события: $e');
+    }
+  }
 }

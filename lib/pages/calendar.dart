@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 
-import '../../theme/colors.dart';
-import '../../core/constants.dart';
-import '../../core/widgets/custom_button.dart';
-import '../../core/widgets/custom_text_field.dart';
-import '../../data/models.dart';
-import '../../data/providers.dart';
+import '../theme/colors.dart';
+import '../core/constants.dart';
+import '../theme/custom_button.dart';
+import '../theme/custom_text_field.dart';
+import '../data/models.dart';
+import '../data/providers.dart';
 
-/// 📅 Экран календаря
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
 
@@ -38,6 +38,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () => context.go('/home'),
+        ),
         title: const Text('Календарь'),
         actions: [
           IconButton(
@@ -75,7 +79,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
       ),
       body: Column(
         children: [
-          // Календарь
           _CustomCalendar(
             focusedDay: _focusedDay,
             selectedDay: _selectedDay,
@@ -97,7 +100,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
           const Divider(height: 1),
 
-          // Список событий
           Expanded(
             child: selectedEvents.isEmpty
                 ? _EmptyEvents(selectedDate: _selectedDay!)
@@ -125,8 +127,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 }
-
-// ========== КАСТОМНЫЙ КАЛЕНДАРЬ ==========
 
 class _CustomCalendar extends StatelessWidget {
   final DateTime focusedDay;
@@ -164,7 +164,6 @@ class _CustomCalendar extends StatelessWidget {
         startingDayOfWeek: StartingDayOfWeek.monday,
         locale: 'ru_RU',
 
-        // Стиль
         calendarStyle: CalendarStyle(
           todayDecoration: BoxDecoration(
             color: AppColors.primary.withValues(alpha: 0.3),
@@ -220,7 +219,6 @@ class _CustomCalendar extends StatelessWidget {
           ),
         ),
 
-        // События
         eventLoader: (day) {
           return events.where((event) {
             return event.date.year == day.year &&
@@ -229,7 +227,6 @@ class _CustomCalendar extends StatelessWidget {
           }).toList();
         },
 
-        // Callbacks
         onDaySelected: onDaySelected,
         onFormatChanged: onFormatChanged,
         onPageChanged: onPageChanged,
@@ -237,8 +234,6 @@ class _CustomCalendar extends StatelessWidget {
     );
   }
 }
-
-// ========== СПИСОК СОБЫТИЙ ==========
 
 class _EventsList extends StatelessWidget {
   final List<EventModel> events;
@@ -272,7 +267,6 @@ class _EventsList extends StatelessWidget {
   }
 }
 
-// Карточка события
 class _EventCard extends StatelessWidget {
   final EventModel event;
 
@@ -306,7 +300,6 @@ class _EventCard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              // Цветовая метка
               Container(
                 width: 4,
                 height: 60,
@@ -317,7 +310,6 @@ class _EventCard extends StatelessWidget {
               ),
               const SizedBox(width: 16),
 
-              // Эмодзи и информация
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -377,7 +369,6 @@ class _EventCard extends StatelessWidget {
                 ),
               ),
 
-              // Кнопка удаления
               IconButton(
                 icon: const Icon(Icons.delete_outline_rounded),
                 color: AppColors.error,
@@ -445,8 +436,6 @@ class _EventCard extends StatelessWidget {
   }
 }
 
-// ========== ПУСТЫЕ СОБЫТИЯ ==========
-
 class _EmptyEvents extends StatelessWidget {
   final DateTime selectedDate;
 
@@ -486,8 +475,6 @@ class _EmptyEvents extends StatelessWidget {
   }
 }
 
-// ========== ДЕТАЛИ СОБЫТИЯ ==========
-
 class _EventDetailsSheet extends StatelessWidget {
   final EventModel event;
 
@@ -519,7 +506,6 @@ class _EventDetailsSheet extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          // Эмодзи и заголовок
           Row(
             children: [
               Text(event.typeEmoji, style: const TextStyle(fontSize: 48)),
@@ -546,7 +532,6 @@ class _EventDetailsSheet extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          // Дата и время
           _InfoRow(
             icon: Icons.calendar_today_rounded,
             label: 'Дата',
@@ -640,8 +625,6 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
-// ========== ДОБАВЛЕНИЕ СОБЫТИЯ ==========
-
 class _AddEventBottomSheet extends StatefulWidget {
   final DateTime selectedDate;
 
@@ -687,7 +670,6 @@ class _AddEventBottomSheetState extends State<_AddEventBottomSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Заголовок
               Row(
                 children: [
                   Container(
@@ -729,7 +711,6 @@ class _AddEventBottomSheetState extends State<_AddEventBottomSheet> {
               ),
               const SizedBox(height: 24),
 
-              // Название
               CustomTextField(
                 label: 'Название',
                 hint: 'Экзамен по математике',
@@ -744,7 +725,6 @@ class _AddEventBottomSheetState extends State<_AddEventBottomSheet> {
               ),
               const SizedBox(height: 16),
 
-              // Описание
               CustomTextField(
                 label: 'Описание (опционально)',
                 hint: 'Дополнительная информация',
@@ -754,7 +734,6 @@ class _AddEventBottomSheetState extends State<_AddEventBottomSheet> {
               ),
               const SizedBox(height: 16),
 
-              // Тип события
               Text(
                 'Тип события',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -803,7 +782,6 @@ class _AddEventBottomSheetState extends State<_AddEventBottomSheet> {
               ),
               const SizedBox(height: 16),
 
-              // Время
               _TimeSelector(
                 label: 'Время',
                 time: _selectedTime,
@@ -811,7 +789,6 @@ class _AddEventBottomSheetState extends State<_AddEventBottomSheet> {
               ),
               const SizedBox(height: 16),
 
-              // Напоминание
               SwitchListTile(
                 value: _hasReminder,
                 onChanged: (value) => setState(() => _hasReminder = value),
@@ -827,7 +804,6 @@ class _AddEventBottomSheetState extends State<_AddEventBottomSheet> {
               ),
               const SizedBox(height: 24),
 
-              // Кнопка добавления
               CustomButton(
                 text: 'Добавить',
                 onPressed: _saveEvent,

@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class UserModel {
   final String id;
   final String name;
@@ -180,6 +182,44 @@ class TeacherModel {
     required this.reviewCount,
     this.photoUrl,
   });
+  factory TeacherModel.fromMap(Map<String, dynamic> map) {
+    return TeacherModel(
+      id: map['id'] ?? '',
+      name: map['name'] ?? '',
+      subject: map['subject'] ?? '',
+      rating: (map['rating'] ?? 0).toDouble(),
+      reviewCount: (map['reviewCount'] ?? 0).toInt(),
+      photoUrl: map['photoUrl'],
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'subject': subject,
+      'rating': rating,
+      'reviewCount': reviewCount,
+      'photoUrl': photoUrl,
+    };
+  }
+
+  TeacherModel copyWith({
+    String? id,
+    String? name,
+    String? subject,
+    double? rating,
+    int? reviewCount,
+    String? photoUrl,
+  }) {
+    return TeacherModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      subject: subject ?? this.subject,
+      rating: rating ?? this.rating,
+      reviewCount: reviewCount ?? this.reviewCount,
+      photoUrl: photoUrl ?? this.photoUrl,
+    );
+  }
 }
 
 class ReviewModel {
@@ -202,6 +242,32 @@ class ReviewModel {
   });
 
   String get displayName => isAnonymous ? 'Аноним' : studentName;
+
+  factory ReviewModel.fromMap(Map<String, dynamic> map) {
+    return ReviewModel(
+      id: map['id'] ?? '',
+      teacherId: map['teacherId'] ?? '',
+      studentName: map['studentName'] ?? '',
+      rating: (map['rating'] ?? 0).toDouble(),
+      comment: map['comment'] ?? '',
+      date: (map['date'] is Timestamp)
+          ? (map['date'] as Timestamp).toDate()
+          : DateTime.tryParse(map['date'] ?? '') ?? DateTime.now(),
+      isAnonymous: map['isAnonymous'] ?? false,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'teacherId': teacherId,
+      'studentName': studentName,
+      'rating': rating,
+      'comment': comment,
+      'date': date,
+      'isAnonymous': isAnonymous,
+    };
+  }
 }
 
 class NewsModel {
@@ -284,6 +350,29 @@ class EventModel {
       default:
         return '📅';
     }
+  }
+
+  factory EventModel.fromMap(Map<String, dynamic> map, String id) {
+    return EventModel(
+      id: id,
+      title: map['title'] ?? '',
+      date: (map['date'] is Timestamp)
+          ? (map['date'] as Timestamp).toDate()
+          : DateTime.tryParse(map['date'] ?? '') ?? DateTime.now(),
+      type: map['type'] ?? 'personal',
+      description: map['description'],
+      hasReminder: map['hasReminder'] ?? false,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'title': title,
+      'date': Timestamp.fromDate(date),
+      'type': type,
+      'description': description,
+      'hasReminder': hasReminder,
+    };
   }
 }
 

@@ -18,11 +18,10 @@ import 'pages/schedule.dart';
 import 'pages/chat/chat_list_screen.dart';
 import 'pages/chat/chat_screen.dart';
 import 'pages/ai_chat/ai_screen.dart';
-import 'pages/calendar/calendar_screen.dart';
+import 'pages/calendar.dart';
 import 'pages/expenses.dart';
-import 'pages/reviews/reviews_screen.dart';
+import 'pages/reviews.dart';
 import 'pages/news.dart';
-import 'pages/attendance/attendance_screen.dart';
 import 'pages/profile.dart';
 import 'data/user_service.dart';
 
@@ -132,11 +131,6 @@ final GoRouter _router = GoRouter(
       path: '/news',
       name: 'news',
       builder: (_, __) => const NewsScreen(),
-    ),
-    GoRoute(
-      path: '/attendance',
-      name: 'attendance',
-      builder: (_, __) => const AttendanceScreen(),
     ),
     GoRoute(
       path: '/profile',
