@@ -4,10 +4,10 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../theme/colors.dart';
-import '../../data/providers.dart';
+import '../theme/colors.dart';
+import '../data/providers.dart';
+import '../data/ai_chat_provider.dart';
 
-/// 🤖 Экран AI-помощника
 class AIScreen extends StatefulWidget {
   const AIScreen({super.key});
 
@@ -46,7 +46,7 @@ class _AIScreenState extends State<AIScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'AI-помощник',
+                    'Верта',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -72,7 +72,6 @@ class _AIScreenState extends State<AIScreen> {
       ),
       body: Column(
         children: [
-          // Сообщения
           Expanded(
             child: aiProvider.messages.isEmpty
                 ? _EmptyAIChat(
@@ -91,14 +90,11 @@ class _AIScreenState extends State<AIScreen> {
                   ),
           ),
 
-          // Индикатор печати
           if (aiProvider.isTyping) _TypingIndicator(),
 
-          // Быстрые команды
           if (aiProvider.messages.isEmpty)
             _QuickCommands(onCommand: _sendMessage),
 
-          // Поле ввода
           _AIMessageInput(
             controller: _messageController,
             onSend: () => _sendMessage(aiProvider),
@@ -114,7 +110,6 @@ class _AIScreenState extends State<AIScreen> {
     aiProvider.sendMessage(_messageController.text.trim());
     _messageController.clear();
 
-    // Прокрутка вниз
     Future.delayed(const Duration(milliseconds: 100), () {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
@@ -157,8 +152,6 @@ class _AIScreenState extends State<AIScreen> {
   }
 }
 
-// ========== АВАТАР БОТА ==========
-
 class _BotAvatar extends StatelessWidget {
   final double size;
 
@@ -170,11 +163,6 @@ class _BotAvatar extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.secondary, AppColors.primary],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
         borderRadius: BorderRadius.circular(size / 4),
         boxShadow: [
           BoxShadow(
@@ -183,13 +171,16 @@ class _BotAvatar extends StatelessWidget {
             offset: const Offset(0, 2),
           ),
         ],
+        image: const DecorationImage(
+          image: NetworkImage(
+            'https://static.wikia.nocookie.net/fiksikiarchives/images/4/4f/%D0%92%D0%B5%D1%80%D1%82%D0%B0_2D.png/revision/latest?cb=20170121110244&path-prefix=ru',
+          ),
+          fit: BoxFit.cover,
+        ),
       ),
-      child: const Center(child: Text('🤖', style: TextStyle(fontSize: 24))),
     );
   }
 }
-
-// ========== BUBBLE СООБЩЕНИЯ ==========
 
 class _AIMessageBubble extends StatelessWidget {
   final dynamic message;
@@ -296,8 +287,6 @@ class _AIMessageBubble extends StatelessWidget {
   }
 }
 
-// ========== ИНДИКАТОР ПЕЧАТИ ==========
-
 class _TypingIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -357,8 +346,6 @@ class _TypingDot extends StatelessWidget {
   }
 }
 
-// ========== ПУСТОЙ ЧАТ ==========
-
 class _EmptyAIChat extends StatelessWidget {
   final String userName;
 
@@ -402,8 +389,6 @@ class _EmptyAIChat extends StatelessWidget {
     );
   }
 }
-
-// ========== БЫСТРЫЕ КОМАНДЫ ==========
 
 class _QuickCommands extends StatelessWidget {
   final Function(AIChatProvider) onCommand;
@@ -482,28 +467,29 @@ class _QuickCommandCard extends StatelessWidget {
             ),
           ],
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 32)),
-            const SizedBox(height: 8),
-            Text(
-              text,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 32)),
+              const SizedBox(height: 8),
+              Text(
+                text,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
-
-// ========== ПОЛЕ ВВОДА ==========
 
 class _AIMessageInput extends StatelessWidget {
   final TextEditingController controller;
@@ -529,7 +515,6 @@ class _AIMessageInput extends StatelessWidget {
       child: SafeArea(
         child: Row(
           children: [
-            // Подсказка
             IconButton(
               icon: const Icon(Icons.lightbulb_outline_rounded),
               color: AppColors.warning,
@@ -537,7 +522,6 @@ class _AIMessageInput extends StatelessWidget {
               onPressed: () => _showHints(context),
             ),
 
-            // Поле ввода
             Expanded(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -560,7 +544,6 @@ class _AIMessageInput extends StatelessWidget {
               ),
             ),
 
-            // Кнопка отправки
             ValueListenableBuilder<TextEditingValue>(
               valueListenable: controller,
               builder: (context, value, child) {
@@ -591,8 +574,6 @@ class _AIMessageInput extends StatelessWidget {
     );
   }
 }
-
-// ========== ПОДСКАЗКИ ==========
 
 class _HintsBottomSheet extends StatelessWidget {
   @override
@@ -662,7 +643,8 @@ class _HintsBottomSheet extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 24),
-          Expanded(
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.5,
             child: ListView.separated(
               itemCount: hints.length,
               separatorBuilder: (context, index) => const Divider(height: 24),

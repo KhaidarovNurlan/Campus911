@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'models.dart';
-import '../core/mock_data.dart';
 import 'firestore_service.dart';
+import 'ai_chat_provider.dart';
 
 class ThemeProvider extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.light;
@@ -95,202 +95,6 @@ class ScheduleProvider extends ChangeNotifier {
 
   void deleteLesson(String id) {
     _lessons.removeWhere((lesson) => lesson.id == id);
-    notifyListeners();
-  }
-}
-
-class ChatProvider extends ChangeNotifier {
-  final List<ChatModel> _chats = MockData.chats;
-  final Map<String, List<MessageModel>> _messages = {};
-  List<ChatModel> get chats => _chats;
-  List<MessageModel> getMessagesForChat(String chatId) {
-    if (!_messages.containsKey(chatId)) {
-      _messages[chatId] = MockData.getMessagesForChat(chatId);
-    }
-    return _messages[chatId]!;
-  }
-
-  void sendMessage(String chatId, String text) {
-    if (!_messages.containsKey(chatId)) {
-      _messages[chatId] = [];
-    }
-    final message = MessageModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      text: text,
-      senderId: '1',
-      senderName: 'Вы',
-      timestamp: DateTime.now(),
-      isMe: true,
-    );
-    _messages[chatId]!.add(message);
-    final chatIndex = _chats.indexWhere((chat) => chat.id == chatId);
-    if (chatIndex != -1) {
-      _chats[chatIndex] = ChatModel(
-        id: _chats[chatIndex].id,
-        name: _chats[chatIndex].name,
-        avatarUrl: _chats[chatIndex].avatarUrl,
-        lastMessage: text,
-        lastMessageTime: DateTime.now(),
-        unreadCount: 0,
-        participants: _chats[chatIndex].participants,
-      );
-    }
-    notifyListeners();
-  }
-
-  void createGroup(String name, String description, List<String> participants) {
-    final newChat = ChatModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      name: name,
-      lastMessage: 'Группа создана',
-      lastMessageTime: DateTime.now(),
-      unreadCount: 0,
-      participants: participants,
-    );
-    _chats.insert(0, newChat);
-    notifyListeners();
-  }
-}
-
-class AIChatProvider extends ChangeNotifier {
-  final List<MessageModel> _messages = [];
-  bool _isTyping = false;
-  List<MessageModel> get messages => _messages;
-  bool get isTyping => _isTyping;
-  void sendMessage(String text) {
-    final userMessage = MessageModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      text: text,
-      senderId: '1',
-      senderName: 'Вы',
-      timestamp: DateTime.now(),
-      isMe: true,
-    );
-    _messages.add(userMessage);
-    notifyListeners();
-    _isTyping = true;
-    notifyListeners();
-    Future.delayed(const Duration(seconds: 1, milliseconds: 500), () {
-      final botResponse = _generateBotResponse(text);
-      final botMessage = MessageModel(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        text: botResponse,
-        senderId: 'bot',
-        senderName: 'AI Помощник',
-        timestamp: DateTime.now(),
-        isMe: false,
-      );
-      _messages.add(botMessage);
-      _isTyping = false;
-      notifyListeners();
-    });
-  }
-
-  String _generateBotResponse(String userMessage) {
-    final lowerMessage = userMessage.toLowerCase();
-    if (_containsAny(lowerMessage, [
-      'привет',
-      'здравствуй',
-      'хай',
-      'йо',
-      'hello',
-    ])) {
-      return _randomFromList([
-        'Привет! Чем помочь? 👋',
-        'Сам такой 😎',
-        'Я - существую (Cogito Ergo Sum) 🧠',
-        'Йоу! Слушаю тебя 🎧',
-        'Здарова, студент! Готов решать твои проблемы 🤓',
-        'Приветствую! Я твой цифровой помощник 🤖',
-        'Хай! Задавай вопрос, не стесняйся 💬',
-        'Салют! Что надо узнать сегодня? 📚',
-      ]);
-    }
-    if (_containsAny(lowerMessage, [
-      'расписание',
-      'когда',
-      'пара',
-      'урок',
-      'занятие',
-    ])) {
-      return '''📅 Сегодня у тебя:
-- Математика - 10:00 (каб. 305)
-- Физика - 12:00 (каб. 201)
-- Программирование - 14:00 (каб. 102)''';
-    }
-    if (_containsAny(lowerMessage, ['дедлайн', 'задание', 'сдать', 'срок'])) {
-      return '''⏰ Ближайшие дедлайны:
-- Курсовая по программированию - 25 октября
-- Реферат по истории - 30 октября
-- Лабораторная по физике - 22 октября''';
-    }
-    if (_containsAny(lowerMessage, ['новости', 'события', 'что нового'])) {
-      return '''📰 Свежие новости AITU:
-- День открытых дверей - 20 октября в 15:00
-- Хакатон CodeFest - 25-27 октября
-- Концерт студентов - 1 ноября''';
-    }
-    if (_containsAny(lowerMessage, [
-      'расход',
-      'потратил',
-      'деньги',
-      'бюджет',
-    ])) {
-      return '''💰 Твои расходы за октябрь:
-- Транспорт: 15,000 ₸
-- Еда: 45,000 ₸
-- Книги: 8,000 ₸
-- Всего: 68,000 ₸''';
-    }
-    if (_containsAny(lowerMessage, [
-      'помощь',
-      'что умеешь',
-      'команды',
-      'функции',
-    ])) {
-      return '''🤖 Я умею:
-✅ Показывать расписание
-✅ Напоминать о дедлайнах
-✅ Следить за расходами
-✅ Показывать новости
-✅ Отвечать на вопросы
-
-Просто спроси!''';
-    }
-    if (_containsAny(lowerMessage, ['как дела', 'как ты', 'что у тебя'])) {
-      return _randomFromList([
-        'Все отлично! У тебя как? 😊',
-        'Работаю на благо студентов! А ты что? 💪',
-        'Существую в облаке, жду твоих вопросов ☁️',
-        'Занят обработкой данных. Тебе что нужно? 📊',
-      ]);
-    }
-    if (_containsAny(lowerMessage, ['спасибо', 'благодарю', 'thanks'])) {
-      return _randomFromList([
-        'Не за что! Обращайся 😉',
-        'Всегда пожалуйста! 🤝',
-        'Рад помочь! Это моя работа 🤖',
-        'Легко! Еще что-нибудь нужно? ✨',
-      ]);
-    }
-    return _randomFromList([
-      'Хм, не совсем понял. Попробуй по-другому 🤔',
-      'Переформулируй вопрос, пожалуйста 🔄',
-      'Не уверен, что понял. Уточни? 🧐',
-      'Это за пределами моих компетенций... Спроси что-то другое 🤷',
-    ]);
-  }
-
-  bool _containsAny(String text, List<String> keywords) {
-    return keywords.any((keyword) => text.contains(keyword));
-  }
-
-  String _randomFromList(List<String> list) {
-    return list[DateTime.now().millisecond % list.length];
-  }
-
-  void clearMessages() {
-    _messages.clear();
     notifyListeners();
   }
 }
@@ -498,53 +302,17 @@ class ReviewProvider extends ChangeNotifier {
   }
 }
 
-class AttendanceProvider extends ChangeNotifier {
-  List<StudentAttendanceModel> _students = MockData.students;
-  List<StudentAttendanceModel> get students => _students;
-  int get presentCount => _students.where((s) => s.isPresent).length;
-  int get absentCount => _students.where((s) => !s.isPresent).length;
-  double get attendancePercentage =>
-      _students.isEmpty ? 0 : (presentCount / _students.length) * 100;
-  void toggleAttendance(String studentId) {
-    final index = _students.indexWhere((s) => s.id == studentId);
-    if (index != -1) {
-      _students[index] = _students[index].copyWith(
-        isPresent: !_students[index].isPresent,
-      );
-      notifyListeners();
-    }
-  }
-
-  void markAllPresent() {
-    _students = _students.map((s) => s.copyWith(isPresent: true)).toList();
-    notifyListeners();
-  }
-
-  void clearAll() {
-    _students = _students.map((s) => s.copyWith(isPresent: false)).toList();
-    notifyListeners();
-  }
-
-  void saveAttendance() {
-    notifyListeners();
-  }
-}
-
 class AppProviders {
   static List<SingleChildWidget> get providers => [
     ChangeNotifierProvider<ThemeProvider>(create: (_) => ThemeProvider()),
     ChangeNotifierProvider<UserProvider>(create: (_) => UserProvider()),
     ChangeNotifierProvider<ScheduleProvider>(create: (_) => ScheduleProvider()),
-    ChangeNotifierProvider<ChatProvider>(create: (_) => ChatProvider()),
     ChangeNotifierProvider<AIChatProvider>(create: (_) => AIChatProvider()),
     ChangeNotifierProvider<ExpenseProvider>(create: (_) => ExpenseProvider()),
     ChangeNotifierProvider<NewsProvider>(create: (_) => NewsProvider()),
     ChangeNotifierProvider<CalendarProvider>(create: (_) => CalendarProvider()),
     ChangeNotifierProvider<ReviewProvider>(
       create: (_) => ReviewProvider()..loadData(),
-    ),
-    ChangeNotifierProvider<AttendanceProvider>(
-      create: (_) => AttendanceProvider(),
     ),
   ];
 }

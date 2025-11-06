@@ -15,9 +15,7 @@ import 'pages/auth.dart';
 import 'pages/login.dart';
 import 'pages/home.dart';
 import 'pages/schedule.dart';
-import 'pages/chat/chat_list_screen.dart';
-import 'pages/chat/chat_screen.dart';
-import 'pages/ai_chat/ai_screen.dart';
+import 'pages/ai_helper.dart';
 import 'pages/calendar.dart';
 import 'pages/expenses.dart';
 import 'pages/reviews.dart';
@@ -97,19 +95,6 @@ final GoRouter _router = GoRouter(
       path: '/schedule',
       name: 'schedule',
       builder: (context, state) => const ScheduleScreen(),
-    ),
-    GoRoute(
-      path: '/chats',
-      name: 'chats',
-      builder: (context, state) => const ChatListScreen(),
-    ),
-    GoRoute(
-      path: '/chat/:id',
-      name: 'chat',
-      builder: (context, state) {
-        final chatId = state.pathParameters['id']!;
-        return ChatScreen(chatId: chatId);
-      },
     ),
     GoRoute(path: '/ai', name: 'ai', builder: (_, __) => const AIScreen()),
     GoRoute(

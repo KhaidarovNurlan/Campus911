@@ -20,7 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _screens = [
     const _HomeTab(),
     const _CalendarTab(),
-    const _ChatsTab(),
+    const _AITab(),
     const _ReviewsTab(),
     const _ProfileTab(),
   ];
@@ -42,8 +42,8 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Календарь',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_rounded),
-            label: 'Чаты',
+            icon: Icon(Icons.smart_toy_rounded),
+            label: 'ИИ-друг',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.reviews_rounded),
@@ -697,28 +697,28 @@ class _CalendarTab extends StatelessWidget {
   }
 }
 
-class _ChatsTab extends StatelessWidget {
-  const _ChatsTab();
+class _AITab extends StatelessWidget {
+  const _AITab();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Чаты')),
+      appBar: AppBar(title: const Text('ИИ-друг')),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(
-              Icons.chat_bubble_rounded,
+              Icons.smart_toy_rounded,
               size: 64,
               color: AppColors.textGrey,
             ),
             const SizedBox(height: 16),
-            const Text('Экран чатов'),
+            const Text('Экран ИИ-помощника'),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () => context.go('/chats'),
-              child: const Text('Открыть список чатов'),
+              onPressed: () => context.go('/ai'),
+              child: const Text('Открыть чат'),
             ),
           ],
         ),
