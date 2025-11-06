@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../app/theme/app_colors.dart'; 
+import '../../theme/colors.dart';
 
-/// 🔘 Кастомная кнопка с анимациями
 class CustomButton extends StatelessWidget {
   final String text;
   final VoidCallback onPressed;
@@ -29,8 +28,13 @@ class CustomButton extends StatelessWidget {
         onPressed: isLoading ? null : onPressed,
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          side: BorderSide(color: backgroundColor ?? AppColors.primary, width: 2),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          side: BorderSide(
+            color: backgroundColor ?? AppColors.primary,
+            width: 2,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
         child: _buildContent(context),
       );

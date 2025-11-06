@@ -6,35 +6,34 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 
-import 'firebase_options.dart';
-import 'app/theme/app_theme.dart';
+import 'theme/theme.dart';
 import 'data/providers.dart';
 
-// Экраны
-import 'features/auth/auth_screen.dart';
-import 'features/home/home_screen.dart';
-import 'features/schedule/schedule_screen.dart';
-import 'features/chat/chat_list_screen.dart';
-import 'features/chat/chat_screen.dart';
-import 'features/ai_chat/ai_screen.dart';
-import 'features/calendar/calendar_screen.dart';
-import 'features/expenses/expenses_screen.dart';
-import 'features/reviews/reviews_screen.dart';
-import 'features/news/news_screen.dart';
-import 'features/attendance/attendance_screen.dart';
-import 'features/profile/profile_screen.dart';
-import 'services/user_service.dart';
+import 'firebase_options.dart';
+
+import 'pages/auth.dart';
+import 'pages/login.dart';
+import 'pages/home.dart';
+import 'pages/schedule.dart';
+import 'pages/chat/chat_list_screen.dart';
+import 'pages/chat/chat_screen.dart';
+import 'pages/ai_chat/ai_screen.dart';
+import 'pages/calendar/calendar_screen.dart';
+import 'pages/expenses.dart';
+import 'pages/reviews/reviews_screen.dart';
+import 'pages/news.dart';
+import 'pages/attendance/attendance_screen.dart';
+import 'pages/profile.dart';
+import 'data/user_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await initializeDateFormatting('ru_RU', null);
-
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -42,13 +41,11 @@ void main() async {
       statusBarBrightness: Brightness.light,
     ),
   );
-
   runApp(const Campus911App());
 }
 
 class Campus911App extends StatelessWidget {
   const Campus911App({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -62,6 +59,7 @@ class Campus911App extends StatelessWidget {
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.themeMode,
             routerConfig: _router,
+            supportedLocales: const [Locale('en', 'US'), Locale('ru', 'RU')],
             builder: (context, child) {
               return MediaQuery(
                 data: MediaQuery.of(
@@ -77,16 +75,19 @@ class Campus911App extends StatelessWidget {
   }
 }
 
-/// 🧭 Конфигурация маршрутов (GoRouter)
 final GoRouter _router = GoRouter(
   initialLocation: '/auth',
   debugLogDiagnostics: true,
-
   routes: [
     GoRoute(
       path: '/auth',
       name: 'auth',
       builder: (context, state) => const _AuthWrapper(),
+    ),
+    GoRoute(
+      path: '/login',
+      name: 'login',
+      builder: (context, state) => const LoginScreen(),
     ),
     GoRoute(
       path: '/home',
@@ -144,7 +145,6 @@ final GoRouter _router = GoRouter(
     ),
   ],
 
-  // Обработка 404
   errorBuilder: (context, state) => Scaffold(
     body: Center(
       child: Column(
@@ -172,7 +172,6 @@ final GoRouter _router = GoRouter(
   ),
 );
 
-/// 🔐 Обертка — проверяет, вошел ли пользователь
 class _AuthWrapper extends StatelessWidget {
   const _AuthWrapper();
 
@@ -186,19 +185,15 @@ class _AuthWrapper extends StatelessWidget {
             body: Center(child: CircularProgressIndicator()),
           );
         }
-
         if (snapshot.hasData) {
           final userService = UserService();
-
           userService.fetchCurrentUser().then((userModel) {
             if (userModel != null) {
               context.read<UserProvider>().setUser(userModel);
             }
           });
-
           return const HomeScreen();
         }
-
         return const AuthScreen();
       },
     );

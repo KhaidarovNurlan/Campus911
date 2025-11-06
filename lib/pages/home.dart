@@ -3,11 +3,10 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../../app/theme/app_colors.dart';
-import '../../core/constants.dart';
-import '../../data/providers.dart';
+import '../theme/colors.dart';
+import '../core/constants.dart';
+import '../data/providers.dart';
 
-/// 🏠 Главный экран с Bottom Navigation Bar
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -60,8 +59,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// ========== ГЛАВНАЯ ВКЛАДКА ==========
-
 class _HomeTab extends StatefulWidget {
   const _HomeTab();
 
@@ -75,7 +72,6 @@ class _HomeTabState extends State<_HomeTab> {
   @override
   void initState() {
     super.initState();
-    // Имитация загрузки данных
     Future.delayed(const Duration(seconds: 1), () {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -97,17 +93,6 @@ class _HomeTabState extends State<_HomeTab> {
       appBar: AppBar(
         title: const Text('Campus911'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_rounded),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('🔔 Уведомлений пока нет'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-            },
-          ),
           IconButton(
             icon: Icon(
               Theme.of(context).brightness == Brightness.dark
@@ -134,7 +119,6 @@ class _HomeTabState extends State<_HomeTab> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Приветствие
               _isLoading
                   ? _ShimmerBox(width: 200, height: 32)
                   : Text(
@@ -143,11 +127,9 @@ class _HomeTabState extends State<_HomeTab> {
                     ),
               const SizedBox(height: 24),
 
-              // Быстрые действия
               _QuickActionsGrid(isLoading: _isLoading),
               const SizedBox(height: 24),
 
-              // Расписание на сегодня
               _SectionHeader(
                 title: 'Расписание на сегодня',
                 icon: Icons.calendar_today_rounded,
@@ -161,7 +143,6 @@ class _HomeTabState extends State<_HomeTab> {
               ),
               const SizedBox(height: 24),
 
-              // Последние новости
               _SectionHeader(
                 title: 'Последние новости',
                 icon: Icons.newspaper_rounded,
@@ -175,7 +156,6 @@ class _HomeTabState extends State<_HomeTab> {
               ),
               const SizedBox(height: 24),
 
-              // Расходы за месяц
               _SectionHeader(
                 title: 'Расходы за месяц',
                 icon: Icons.account_balance_wallet_rounded,
@@ -200,7 +180,6 @@ class _HomeTabState extends State<_HomeTab> {
   }
 }
 
-// Быстрые действия
 class _QuickActionsGrid extends StatelessWidget {
   final bool isLoading;
 
@@ -325,7 +304,6 @@ class _QuickAction extends StatelessWidget {
   }
 }
 
-// Заголовок секции
 class _SectionHeader extends StatelessWidget {
   final String title;
   final IconData icon;
@@ -357,7 +335,6 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-// Расписание на сегодня
 class _TodaySchedule extends StatelessWidget {
   final List lessons;
   final bool isLoading;
@@ -459,7 +436,6 @@ class _LessonCard extends StatelessWidget {
   }
 }
 
-// Превью новостей
 class _NewsPreview extends StatelessWidget {
   final List news;
   final bool isLoading;
@@ -473,8 +449,8 @@ class _NewsPreview extends StatelessWidget {
         children: List.generate(
           2,
           (index) => Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: _ShimmerBox(width: double.infinity, height: 100),
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _ShimmerBox(width: double.infinity, height: 80),
           ),
         ),
       );
@@ -490,7 +466,7 @@ class _NewsPreview extends StatelessWidget {
     return Column(
       children: news.map((newsItem) {
         return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.only(bottom: 8),
           child: _NewsCard(newsItem: newsItem),
         );
       }).toList(),
@@ -561,7 +537,6 @@ class _NewsCard extends StatelessWidget {
   }
 }
 
-// Сводка расходов
 class _ExpensesSummary extends StatelessWidget {
   final double totalAmount;
   final bool isLoading;
@@ -630,7 +605,6 @@ class _ExpensesSummary extends StatelessWidget {
   }
 }
 
-// Пустое состояние
 class _EmptyState extends StatelessWidget {
   final IconData icon;
   final String message;
@@ -662,7 +636,6 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-// Shimmer эффект загрузки
 class _ShimmerBox extends StatelessWidget {
   final double width;
   final double height;
@@ -689,8 +662,6 @@ class _ShimmerBox extends StatelessWidget {
     );
   }
 }
-
-// ========== ЗАГЛУШКИ ДЛЯ ДРУГИХ ВКЛАДОК ==========
 
 class _ScheduleTab extends StatelessWidget {
   const _ScheduleTab();
@@ -807,7 +778,7 @@ class _ProfileTab extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              user?.university ?? '',
+              user?.college ?? '',
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(color: AppColors.textGrey),

@@ -5,14 +5,13 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 
-import '../../app/theme/app_colors.dart';
-import '../../core/constants.dart';
-import '../../core/widgets/custom_button.dart';
-import '../../core/widgets/custom_text_field.dart';
-import '../../data/models.dart';
-import '../../data/providers.dart';
+import '../theme/colors.dart';
+import '../core/constants.dart';
+import '../core/widgets/custom_button.dart';
+import '../core/widgets/custom_text_field.dart';
+import '../data/models.dart';
+import '../data/providers.dart';
 
-/// 💰 Экран трекера расходов
 class ExpensesScreen extends StatefulWidget {
   const ExpensesScreen({super.key});
 
@@ -28,6 +27,12 @@ class _ExpensesScreenState extends State<ExpensesScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    Future.microtask(() async {
+      final user = context.read<UserProvider>().user;
+      if (user != null) {
+        await context.read<ExpenseProvider>().loadExpenses(user.id);
+      }
+    });
   }
 
   @override
@@ -93,8 +98,6 @@ class _ExpensesScreenState extends State<ExpensesScreen>
   }
 }
 
-// ========== ВКЛАДКА СТАТИСТИКИ ==========
-
 class _StatisticsTab extends StatelessWidget {
   const _StatisticsTab();
 
@@ -114,11 +117,9 @@ class _StatisticsTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Общая сумма
           _TotalAmountCard(totalAmount: totalAmount),
           const SizedBox(height: 24),
 
-          // Круговая диаграмма
           Text(
             'Расходы по категориям',
             style: Theme.of(context).textTheme.headlineSmall,
@@ -127,7 +128,6 @@ class _StatisticsTab extends StatelessWidget {
           _PieChartWidget(expensesByCategory: expensesByCategory),
           const SizedBox(height: 24),
 
-          // Топ-3 категории
           Text(
             'Топ-3 категории',
             style: Theme.of(context).textTheme.headlineSmall,
@@ -136,7 +136,6 @@ class _StatisticsTab extends StatelessWidget {
           _TopCategoriesWidget(expensesByCategory: expensesByCategory),
           const SizedBox(height: 24),
 
-          // Линейный график
           Text(
             'График расходов',
             style: Theme.of(context).textTheme.headlineSmall,
@@ -149,7 +148,6 @@ class _StatisticsTab extends StatelessWidget {
   }
 }
 
-// Карточка общей суммы
 class _TotalAmountCard extends StatelessWidget {
   final double totalAmount;
 
@@ -239,7 +237,6 @@ class _TotalAmountCard extends StatelessWidget {
   }
 }
 
-// Круговая диаграмма
 class _PieChartWidget extends StatelessWidget {
   final Map<String, double> expensesByCategory;
 
@@ -367,7 +364,6 @@ class _PieChartWidget extends StatelessWidget {
   }
 }
 
-// Топ-3 категории
 class _TopCategoriesWidget extends StatelessWidget {
   final Map<String, double> expensesByCategory;
 
@@ -461,7 +457,6 @@ class _CategoryCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Ранг
           Container(
             width: 40,
             height: 40,
@@ -482,7 +477,6 @@ class _CategoryCard extends StatelessWidget {
           ),
           const SizedBox(width: 16),
 
-          // Эмодзи и название
           Text(emoji, style: const TextStyle(fontSize: 32)),
           const SizedBox(width: 12),
           Expanded(
@@ -494,7 +488,6 @@ class _CategoryCard extends StatelessWidget {
             ),
           ),
 
-          // Сумма
           Text(
             '${amount.toStringAsFixed(0)} ₸',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -508,7 +501,6 @@ class _CategoryCard extends StatelessWidget {
   }
 }
 
-// Линейный график
 class _LineChartWidget extends StatelessWidget {
   final List<ExpenseModel> expenses;
 
@@ -518,7 +510,6 @@ class _LineChartWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Группируем по дням
     final Map<int, double> dailyExpenses = {};
     for (var expense in expenses) {
       final day = expense.date.day;
@@ -631,8 +622,6 @@ class _LineChartWidget extends StatelessWidget {
   }
 }
 
-// ========== ВКЛАДКА ИСТОРИИ ==========
-
 class _HistoryTab extends StatelessWidget {
   const _HistoryTab();
 
@@ -645,7 +634,6 @@ class _HistoryTab extends StatelessWidget {
       return _EmptyExpenses();
     }
 
-    // Группируем по датам
     final Map<String, List<ExpenseModel>> groupedExpenses = {};
     for (var expense in expenses) {
       final dateKey = DateFormat('d MMMM yyyy', 'ru_RU').format(expense.date);
@@ -676,7 +664,6 @@ class _HistoryTab extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Заголовок дня
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: Row(
@@ -699,7 +686,6 @@ class _HistoryTab extends StatelessWidget {
               ),
             ),
 
-            // Расходы за день
             ...dayExpenses.map(
               (expense) => _ExpenseHistoryCard(expense: expense),
             ),
@@ -711,7 +697,6 @@ class _HistoryTab extends StatelessWidget {
   }
 }
 
-// Карточка расхода в истории
 class _ExpenseHistoryCard extends StatelessWidget {
   final ExpenseModel expense;
 
@@ -760,8 +745,15 @@ class _ExpenseHistoryCard extends StatelessWidget {
             ),
           );
         },
-        onDismissed: (direction) {
-          context.read<ExpenseProvider>().deleteExpense(expense.id);
+        onDismissed: (direction) async {
+          final user = context.read<UserProvider>().user;
+          if (user != null) {
+            await context.read<ExpenseProvider>().deleteExpense(
+              user.id,
+              expense.id,
+            );
+          }
+
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('🗑️ Расход удалён'),
@@ -781,14 +773,12 @@ class _ExpenseHistoryCard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              // Эмодзи
               Text(
                 categoryInfo['emoji']!,
                 style: const TextStyle(fontSize: 32),
               ),
               const SizedBox(width: 12),
 
-              // Информация
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -814,7 +804,6 @@ class _ExpenseHistoryCard extends StatelessWidget {
                 ),
               ),
 
-              // Сумма
               Text(
                 '${expense.amount.toStringAsFixed(0)} ₸',
                 style: Theme.of(
@@ -828,8 +817,6 @@ class _ExpenseHistoryCard extends StatelessWidget {
     );
   }
 }
-
-// ========== ПУСТЫЕ РАСХОДЫ ==========
 
 class _EmptyExpenses extends StatelessWidget {
   @override
@@ -864,8 +851,6 @@ class _EmptyExpenses extends StatelessWidget {
     );
   }
 }
-
-// ========== ДОБАВЛЕНИЕ РАСХОДА ==========
 
 class _AddExpenseBottomSheet extends StatefulWidget {
   const _AddExpenseBottomSheet();
@@ -909,7 +894,6 @@ class _AddExpenseBottomSheetState extends State<_AddExpenseBottomSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Заголовок
               Row(
                 children: [
                   Container(
@@ -938,7 +922,6 @@ class _AddExpenseBottomSheetState extends State<_AddExpenseBottomSheet> {
               ),
               const SizedBox(height: 24),
 
-              // Сумма
               CustomTextField(
                 label: 'Сумма',
                 hint: '1000',
@@ -958,7 +941,6 @@ class _AddExpenseBottomSheetState extends State<_AddExpenseBottomSheet> {
               ),
               const SizedBox(height: 16),
 
-              // Категория
               Text(
                 'Категория',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -974,7 +956,6 @@ class _AddExpenseBottomSheetState extends State<_AddExpenseBottomSheet> {
               ),
               const SizedBox(height: 16),
 
-              // Комментарий
               CustomTextField(
                 label: 'Комментарий (опционально)',
                 hint: 'Например: Обед в столовой',
@@ -984,14 +965,12 @@ class _AddExpenseBottomSheetState extends State<_AddExpenseBottomSheet> {
               ),
               const SizedBox(height: 16),
 
-              // Дата
               _DateSelector(
                 selectedDate: _selectedDate,
                 onDateChanged: (date) => setState(() => _selectedDate = date),
               ),
               const SizedBox(height: 24),
 
-              // Кнопка добавления
               CustomButton(
                 text: 'Добавить',
                 onPressed: _saveExpense,
@@ -1004,8 +983,11 @@ class _AddExpenseBottomSheetState extends State<_AddExpenseBottomSheet> {
     );
   }
 
-  void _saveExpense() {
+  void _saveExpense() async {
     if (!_formKey.currentState!.validate()) return;
+
+    final user = context.read<UserProvider>().user;
+    if (user == null) return;
 
     final expense = ExpenseModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -1015,23 +997,23 @@ class _AddExpenseBottomSheetState extends State<_AddExpenseBottomSheet> {
       note: _noteController.text.isEmpty ? null : _noteController.text,
     );
 
-    context.read<ExpenseProvider>().addExpense(expense);
+    await context.read<ExpenseProvider>().addExpense(user.id, expense);
 
-    Navigator.pop(context);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '✅ Расход ${expense.amount.toStringAsFixed(0)} ₸ добавлен',
+    if (mounted) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '✅ Расход ${expense.amount.toStringAsFixed(0)} ₸ добавлен',
+          ),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
         ),
-        backgroundColor: AppColors.success,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+      );
+    }
   }
 }
 
-// Селектор категории
 class _CategorySelector extends StatelessWidget {
   final String selectedCategory;
   final ValueChanged<String> onCategoryChanged;
@@ -1101,7 +1083,6 @@ class _CategorySelector extends StatelessWidget {
   }
 }
 
-// Селектор даты
 class _DateSelector extends StatelessWidget {
   final DateTime selectedDate;
   final ValueChanged<DateTime> onDateChanged;
@@ -1130,23 +1111,23 @@ class _DateSelector extends StatelessWidget {
           onTap: () async {
             final pickedDate = await showDatePicker(
               context: context,
-              initialDate: selectedDate,
-              firstDate: DateTime(2020),
-              lastDate: DateTime.now(),
-              locale: const Locale('ru', 'RU'),
-              builder: (context, child) {
+              initialDate: DateTime.now(),
+              firstDate: DateTime(2000),
+              lastDate: DateTime(2100),
+              builder: (BuildContext context, Widget? child) {
                 return Theme(
                   data: Theme.of(context).copyWith(
-                    datePickerTheme: DatePickerThemeData(
-                      backgroundColor: isDark
-                          ? AppColors.darkSurface
-                          : AppColors.white,
+                    colorScheme: ColorScheme.light(
+                      primary: Colors.deepPurple,
+                      onPrimary: Colors.white,
+                      onSurface: Colors.black,
                     ),
                   ),
                   child: child!,
                 );
               },
             );
+
             if (pickedDate != null) {
               onDateChanged(pickedDate);
             }
@@ -1182,8 +1163,6 @@ class _DateSelector extends StatelessWidget {
     );
   }
 }
-
-// ========== ФИЛЬТР ==========
 
 class _FilterOptionsSheet extends StatelessWidget {
   @override

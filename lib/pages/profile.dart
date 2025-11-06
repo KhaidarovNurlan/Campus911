@@ -1,24 +1,68 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-import '../../app/theme/app_colors.dart';
-import '../../data/providers.dart';
+import '../theme/colors.dart';
+import '../data/providers.dart';
+import '../data/user_service.dart';
 
-/// 👤 Экран профиля пользователя
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    final userService = UserService();
+    final userProvider = context.read<UserProvider>();
+
+    try {
+      final userModel = await userService.fetchCurrentUser();
+      if (userModel != null) {
+        userProvider.setUser(userModel);
+      } else {
+        setState(() => _error = 'Пользователь не найден в базе данных.');
+      }
+    } catch (e) {
+      setState(() => _error = 'Ошибка при загрузке профиля: $e');
+    }
+
+    setState(() => _isLoading = false);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final userProvider = context.watch<UserProvider>();
     final themeProvider = context.watch<ThemeProvider>();
+    final userProvider = context.watch<UserProvider>();
     final user = userProvider.user;
+
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (_error != null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Профиль')),
+        body: Center(child: Text(_error!)),
+      );
+    }
 
     if (user == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Профиль')),
-        body: const Center(child: Text('Пользователь не найден')),
+        body: const Center(child: Text('Нет данных пользователя')),
       );
     }
 
@@ -35,7 +79,9 @@ class ProfileScreen extends StatelessWidget {
             tooltip: 'Редактировать',
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('🔧 Функция в разработке')),
+                const SnackBar(
+                  content: Text('🔧 Функция редактирования в разработке'),
+                ),
               );
             },
           ),
@@ -44,25 +90,15 @@ class ProfileScreen extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Заголовок профиля
             _ProfileHeader(user: user),
-
-            // Информация
             _ProfileInfo(user: user),
-
             const SizedBox(height: 16),
-
-            // Настройки
             _SettingsSection(
               isDarkMode: themeProvider.isDarkMode,
               onThemeToggle: () => themeProvider.toggleTheme(),
             ),
-
             const SizedBox(height: 16),
-
-            // Действия
             _ActionsSection(),
-
             const SizedBox(height: 32),
           ],
         ),
@@ -70,8 +106,6 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 }
-
-// ========== ЗАГОЛОВОК ПРОФИЛЯ ==========
 
 class _ProfileHeader extends StatelessWidget {
   final dynamic user;
@@ -98,7 +132,6 @@ class _ProfileHeader extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Аватар
           Container(
             width: 100,
             height: 100,
@@ -126,7 +159,6 @@ class _ProfileHeader extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // Имя
           Text(
             user.name,
             style: const TextStyle(
@@ -138,7 +170,6 @@ class _ProfileHeader extends StatelessWidget {
           ),
           const SizedBox(height: 8),
 
-          // Роль
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             decoration: BoxDecoration(
@@ -170,8 +201,6 @@ class _ProfileHeader extends StatelessWidget {
     );
   }
 }
-
-// ========== ИНФОРМАЦИЯ О ПОЛЬЗОВАТЕЛЕ ==========
 
 class _ProfileInfo extends StatelessWidget {
   final dynamic user;
@@ -218,8 +247,8 @@ class _ProfileInfo extends StatelessWidget {
           const Divider(height: 24),
           _InfoRow(
             icon: Icons.school_rounded,
-            label: 'Университет',
-            value: user.university,
+            label: 'Колледж',
+            value: user.college,
           ),
           const Divider(height: 24),
           _InfoRow(
@@ -282,8 +311,6 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
-// ========== НАСТРОЙКИ ==========
-
 class _SettingsSection extends StatelessWidget {
   final bool isDarkMode;
   final VoidCallback onThemeToggle;
@@ -340,59 +367,11 @@ class _SettingsSection extends StatelessWidget {
             activeThumbColor: AppColors.primary,
             contentPadding: EdgeInsets.zero,
           ),
-          const Divider(height: 24),
-          ListTile(
-            leading: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppColors.info.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.notifications_rounded,
-                color: AppColors.info,
-              ),
-            ),
-            title: const Text('Уведомления'),
-            subtitle: const Text('Настройки уведомлений'),
-            trailing: const Icon(Icons.chevron_right_rounded),
-            contentPadding: EdgeInsets.zero,
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('🔧 Функция в разработке')),
-              );
-            },
-          ),
-          const Divider(height: 24),
-          ListTile(
-            leading: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppColors.warning.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.language_rounded,
-                color: AppColors.warning,
-              ),
-            ),
-            title: const Text('Язык'),
-            subtitle: const Text('Русский'),
-            trailing: const Icon(Icons.chevron_right_rounded),
-            contentPadding: EdgeInsets.zero,
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('🔧 Функция в разработке')),
-              );
-            },
-          ),
         ],
       ),
     );
   }
 }
-
-// ========== ДЕЙСТВИЯ ==========
 
 class _ActionsSection extends StatelessWidget {
   @override
@@ -435,7 +414,9 @@ class _ActionsSection extends StatelessWidget {
             contentPadding: EdgeInsets.zero,
             onTap: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('📧 support@campus911.kz')),
+                const SnackBar(
+                  content: Text('📧 Пишите нам: nurlankh888@gmail.com'),
+                ),
               );
             },
           ),
@@ -453,7 +434,7 @@ class _ActionsSection extends StatelessWidget {
               ),
             ),
             title: const Text('О приложении'),
-            subtitle: const Text('Версия 1.0.0'),
+            subtitle: const Text('Версия 1.0.0 (1 семестр)'),
             trailing: const Icon(Icons.chevron_right_rounded),
             contentPadding: EdgeInsets.zero,
             onTap: () => _showAboutDialog(context),
@@ -508,7 +489,7 @@ class _ActionsSection extends StatelessWidget {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            const Text('Версия 1.0.0'),
+            const Text('Версия 1.0.0 (1 семестр)'),
             const SizedBox(height: 16),
             Text(
               'Мобильное приложение для студентов с расписанием, уведомлениями, чатами и AI-помощником.',
@@ -555,10 +536,22 @@ class _ActionsSection extends StatelessWidget {
             child: const Text('Отмена'),
           ),
           ElevatedButton(
-            onPressed: () {
-              context.read<UserProvider>().logout();
+            onPressed: () async {
               Navigator.pop(context);
-              context.go('/auth');
+
+              try {
+                await FirebaseAuth.instance.signOut();
+
+                context.read<UserProvider>().logout();
+
+                if (context.mounted) {
+                  context.go('/auth');
+                }
+              } catch (e) {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text('Ошибка выхода: $e')));
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
             child: const Text('Выйти'),

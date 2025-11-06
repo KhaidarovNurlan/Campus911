@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../app/theme/app_colors.dart';
+import '../../theme/colors.dart';
 
-/// 📝 Кастомное текстовое поле
 class CustomTextField extends StatelessWidget {
   final String label;
   final String? hint;
@@ -39,11 +38,11 @@ class CustomTextField extends StatelessWidget {
         Text(
           label,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.textLight
-                    : AppColors.textDark,
-              ),
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.textLight
+                : AppColors.textDark,
+          ),
         ),
         const SizedBox(height: 8),
         TextFormField(

@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../app/theme/app_colors.dart';
+import '../../theme/colors.dart';
 import '../../data/providers.dart';
 
 /// 🤖 Экран AI-помощника

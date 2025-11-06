@@ -1,20 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'models.dart';
 import '../core/mock_data.dart';
-
-/// 🎯 Все провайдеры приложения
-
-// ========== THEME PROVIDER ==========
+import 'firestore_service.dart';
 
 class ThemeProvider extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.light;
-
   ThemeMode get themeMode => _themeMode;
-
   bool get isDarkMode => _themeMode == ThemeMode.dark;
-
   void toggleTheme() {
     _themeMode = _themeMode == ThemeMode.light
         ? ThemeMode.dark
@@ -28,22 +23,19 @@ class ThemeProvider extends ChangeNotifier {
   }
 }
 
-// ========== USER PROVIDER ==========
-
 class UserProvider extends ChangeNotifier {
   UserModel? _user;
-
   UserModel? get user => _user;
   bool get isAuthenticated => _user != null;
   bool get isHeadman => _user?.isHeadman ?? false;
   bool get isStudent => _user?.isStudent ?? false;
-
   void setUser(UserModel user) {
     _user = user;
     notifyListeners();
   }
 
-  void logout() {
+  Future<void> logout() async {
+    await FirebaseAuth.instance.signOut();
     _user = null;
     notifyListeners();
   }
@@ -55,13 +47,12 @@ class UserProvider extends ChangeNotifier {
     String? photoUrl,
   }) {
     if (_user == null) return;
-
     _user = UserModel(
       id: _user!.id,
       name: name ?? _user!.name,
       email: email ?? _user!.email,
       phone: phone ?? _user!.phone,
-      university: _user!.university,
+      college: _user!.college,
       gender: _user!.gender,
       role: _user!.role,
       photoUrl: photoUrl ?? _user!.photoUrl,
@@ -70,15 +61,11 @@ class UserProvider extends ChangeNotifier {
   }
 }
 
-// ========== SCHEDULE PROVIDER ==========
-
 class ScheduleProvider extends ChangeNotifier {
-  final List<LessonModel> _lessons = MockData.lessons;
+  final List<LessonModel> _lessons = [];
   String _selectedDay = 'Понедельник';
-
   List<LessonModel> get lessons => _lessons;
   String get selectedDay => _selectedDay;
-
   List<LessonModel> getLessonsForDay(String day) {
     return _lessons.where((lesson) => lesson.dayOfWeek == day).toList();
   }
@@ -112,14 +99,10 @@ class ScheduleProvider extends ChangeNotifier {
   }
 }
 
-// ========== CHAT PROVIDER ==========
-
 class ChatProvider extends ChangeNotifier {
   final List<ChatModel> _chats = MockData.chats;
   final Map<String, List<MessageModel>> _messages = {};
-
   List<ChatModel> get chats => _chats;
-
   List<MessageModel> getMessagesForChat(String chatId) {
     if (!_messages.containsKey(chatId)) {
       _messages[chatId] = MockData.getMessagesForChat(chatId);
@@ -131,7 +114,6 @@ class ChatProvider extends ChangeNotifier {
     if (!_messages.containsKey(chatId)) {
       _messages[chatId] = [];
     }
-
     final message = MessageModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       text: text,
@@ -140,10 +122,7 @@ class ChatProvider extends ChangeNotifier {
       timestamp: DateTime.now(),
       isMe: true,
     );
-
     _messages[chatId]!.add(message);
-
-    // Обновляем последнее сообщение в чате
     final chatIndex = _chats.indexWhere((chat) => chat.id == chatId);
     if (chatIndex != -1) {
       _chats[chatIndex] = ChatModel(
@@ -156,7 +135,6 @@ class ChatProvider extends ChangeNotifier {
         participants: _chats[chatIndex].participants,
       );
     }
-
     notifyListeners();
   }
 
@@ -169,23 +147,17 @@ class ChatProvider extends ChangeNotifier {
       unreadCount: 0,
       participants: participants,
     );
-
     _chats.insert(0, newChat);
     notifyListeners();
   }
 }
 
-// ========== AI CHAT PROVIDER ==========
-
 class AIChatProvider extends ChangeNotifier {
   final List<MessageModel> _messages = [];
   bool _isTyping = false;
-
   List<MessageModel> get messages => _messages;
   bool get isTyping => _isTyping;
-
   void sendMessage(String text) {
-    // Добавляем сообщение пользователя
     final userMessage = MessageModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       text: text,
@@ -194,18 +166,12 @@ class AIChatProvider extends ChangeNotifier {
       timestamp: DateTime.now(),
       isMe: true,
     );
-
     _messages.add(userMessage);
     notifyListeners();
-
-    // Показываем индикатор печати
     _isTyping = true;
     notifyListeners();
-
-    // Симулируем задержку ответа (1-2 сек)
     Future.delayed(const Duration(seconds: 1, milliseconds: 500), () {
       final botResponse = _generateBotResponse(text);
-
       final botMessage = MessageModel(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         text: botResponse,
@@ -214,7 +180,6 @@ class AIChatProvider extends ChangeNotifier {
         timestamp: DateTime.now(),
         isMe: false,
       );
-
       _messages.add(botMessage);
       _isTyping = false;
       notifyListeners();
@@ -223,8 +188,6 @@ class AIChatProvider extends ChangeNotifier {
 
   String _generateBotResponse(String userMessage) {
     final lowerMessage = userMessage.toLowerCase();
-
-    // 1. ПРИВЕТСТВИЯ
     if (_containsAny(lowerMessage, [
       'привет',
       'здравствуй',
@@ -243,8 +206,6 @@ class AIChatProvider extends ChangeNotifier {
         'Салют! Что надо узнать сегодня? 📚',
       ]);
     }
-
-    // 2. РАСПИСАНИЕ
     if (_containsAny(lowerMessage, [
       'расписание',
       'когда',
@@ -257,24 +218,18 @@ class AIChatProvider extends ChangeNotifier {
 - Физика - 12:00 (каб. 201)
 - Программирование - 14:00 (каб. 102)''';
     }
-
-    // 3. ДЕДЛАЙНЫ
     if (_containsAny(lowerMessage, ['дедлайн', 'задание', 'сдать', 'срок'])) {
       return '''⏰ Ближайшие дедлайны:
 - Курсовая по программированию - 25 октября
 - Реферат по истории - 30 октября
 - Лабораторная по физике - 22 октября''';
     }
-
-    // 4. НОВОСТИ
     if (_containsAny(lowerMessage, ['новости', 'события', 'что нового'])) {
       return '''📰 Свежие новости AITU:
 - День открытых дверей - 20 октября в 15:00
 - Хакатон CodeFest - 25-27 октября
 - Концерт студентов - 1 ноября''';
     }
-
-    // 5. РАСХОДЫ
     if (_containsAny(lowerMessage, [
       'расход',
       'потратил',
@@ -287,8 +242,6 @@ class AIChatProvider extends ChangeNotifier {
 - Книги: 8,000 ₸
 - Всего: 68,000 ₸''';
     }
-
-    // 6. ПОМОЩЬ
     if (_containsAny(lowerMessage, [
       'помощь',
       'что умеешь',
@@ -304,8 +257,6 @@ class AIChatProvider extends ChangeNotifier {
 
 Просто спроси!''';
     }
-
-    // 7. КАК ДЕЛА
     if (_containsAny(lowerMessage, ['как дела', 'как ты', 'что у тебя'])) {
       return _randomFromList([
         'Все отлично! У тебя как? 😊',
@@ -314,8 +265,6 @@ class AIChatProvider extends ChangeNotifier {
         'Занят обработкой данных. Тебе что нужно? 📊',
       ]);
     }
-
-    // 8. СПАСИБО
     if (_containsAny(lowerMessage, ['спасибо', 'благодарю', 'thanks'])) {
       return _randomFromList([
         'Не за что! Обращайся 😉',
@@ -324,8 +273,6 @@ class AIChatProvider extends ChangeNotifier {
         'Легко! Еще что-нибудь нужно? ✨',
       ]);
     }
-
-    // 9. FALLBACK
     return _randomFromList([
       'Хм, не совсем понял. Попробуй по-другому 🤔',
       'Переформулируй вопрос, пожалуйста 🔄',
@@ -348,80 +295,85 @@ class AIChatProvider extends ChangeNotifier {
   }
 }
 
-// ========== EXPENSE PROVIDER ==========
-
-class ExpenseProvider extends ChangeNotifier {
-  final List<ExpenseModel> _expenses = MockData.expenses;
-
+class ExpenseProvider with ChangeNotifier {
+  final _firestore = FirestoreService();
+  final List<ExpenseModel> _expenses = [];
   List<ExpenseModel> get expenses => _expenses;
-
-  double get totalAmount =>
-      _expenses.fold(0, (sum, expense) => sum + expense.amount);
-
+  double get totalAmount => _expenses.fold(0, (sum, e) => sum + e.amount);
   Map<String, double> get expensesByCategory {
-    final Map<String, double> result = {};
-    for (var expense in _expenses) {
-      result[expense.category] =
-          (result[expense.category] ?? 0) + expense.amount;
+    final map = <String, double>{};
+    for (var e in _expenses) {
+      map[e.category] = (map[e.category] ?? 0) + e.amount;
     }
-    return result;
+    return map;
   }
 
-  List<ExpenseModel> getExpensesForMonth(DateTime month) {
-    return _expenses.where((expense) {
-      return expense.date.year == month.year &&
-          expense.date.month == month.month;
-    }).toList();
+  Future<void> loadExpenses(String userId) async {
+    _expenses
+      ..clear()
+      ..addAll(await _firestore.getExpenses(userId));
+    notifyListeners();
   }
 
-  void addExpense(ExpenseModel expense) {
+  Future<void> addExpense(String userId, ExpenseModel expense) async {
     _expenses.add(expense);
     notifyListeners();
+    await _firestore.addExpense(userId, expense);
   }
 
-  void deleteExpense(String id) {
-    _expenses.removeWhere((expense) => expense.id == id);
+  Future<void> deleteExpense(String userId, String id) async {
+    _expenses.removeWhere((e) => e.id == id);
     notifyListeners();
+    await _firestore.deleteExpense(userId, id);
   }
 }
 
-// ========== NEWS PROVIDER ==========
-
 class NewsProvider extends ChangeNotifier {
-  final List<NewsModel> _news = MockData.news;
+  final List<NewsModel> _news = [];
+  bool _isLoading = false;
   String? _selectedCategory;
-
+  bool get isLoading => _isLoading;
   List<NewsModel> get news => _selectedCategory == null
       ? _news
       : _news.where((n) => n.category == _selectedCategory).toList();
-
   String? get selectedCategory => _selectedCategory;
-
   void setCategory(String? category) {
     _selectedCategory = category;
     notifyListeners();
   }
 
-  void addNews(NewsModel newsItem) {
-    _news.insert(0, newsItem);
+  Future<void> loadNews() async {
+    _isLoading = true;
+    notifyListeners();
+    final firestore = FirestoreService();
+    final fetched = await firestore.getNews();
+    _news
+      ..clear()
+      ..addAll(fetched);
+    _isLoading = false;
     notifyListeners();
   }
 
-  void deleteNews(String id) {
+  Future<void> addNews(NewsModel news) async {
+    final firestore = FirestoreService();
+    await firestore.addNews(news);
+    _news.insert(0, news);
+    notifyListeners();
+  }
+
+  Future<void> deleteNews(String id) async {
+    final firestore = FirestoreService();
+    await firestore.deleteNews(id);
     _news.removeWhere((n) => n.id == id);
     notifyListeners();
   }
 }
 
-// ========== CALENDAR PROVIDER ==========
-
 class CalendarProvider extends ChangeNotifier {
   final List<EventModel> _events = MockData.events;
   DateTime _selectedDate = DateTime.now();
-
   List<EventModel> get events => _events;
   DateTime get selectedDate => _selectedDate;
-
   List<EventModel> getEventsForDate(DateTime date) {
     return _events.where((event) {
       return event.date.year == date.year &&
@@ -446,14 +398,10 @@ class CalendarProvider extends ChangeNotifier {
   }
 }
 
-// ========== REVIEW PROVIDER ==========
-
 class ReviewProvider extends ChangeNotifier {
   final List<TeacherModel> _teachers = MockData.teachers;
   final Map<String, List<ReviewModel>> _reviews = {};
-
   List<TeacherModel> get teachers => _teachers;
-
   List<ReviewModel> getReviewsForTeacher(String teacherId) {
     if (!_reviews.containsKey(teacherId)) {
       _reviews[teacherId] = MockData.getReviewsForTeacher(teacherId);
@@ -466,15 +414,12 @@ class ReviewProvider extends ChangeNotifier {
       _reviews[review.teacherId] = [];
     }
     _reviews[review.teacherId]!.insert(0, review);
-
-    // Обновляем рейтинг преподавателя
     final teacherIndex = _teachers.indexWhere((t) => t.id == review.teacherId);
     if (teacherIndex != -1) {
       final allReviews = _reviews[review.teacherId]!;
       final avgRating =
           allReviews.fold<double>(0, (sum, r) => sum + r.rating) /
           allReviews.length;
-
       _teachers[teacherIndex] = TeacherModel(
         id: _teachers[teacherIndex].id,
         name: _teachers[teacherIndex].name,
@@ -484,23 +429,17 @@ class ReviewProvider extends ChangeNotifier {
         photoUrl: _teachers[teacherIndex].photoUrl,
       );
     }
-
     notifyListeners();
   }
 }
 
-// ========== ATTENDANCE PROVIDER ==========
-
 class AttendanceProvider extends ChangeNotifier {
   List<StudentAttendanceModel> _students = MockData.students;
-
   List<StudentAttendanceModel> get students => _students;
-
   int get presentCount => _students.where((s) => s.isPresent).length;
   int get absentCount => _students.where((s) => !s.isPresent).length;
   double get attendancePercentage =>
       _students.isEmpty ? 0 : (presentCount / _students.length) * 100;
-
   void toggleAttendance(String studentId) {
     final index = _students.indexWhere((s) => s.id == studentId);
     if (index != -1) {
@@ -522,13 +461,9 @@ class AttendanceProvider extends ChangeNotifier {
   }
 
   void saveAttendance() {
-    // В реальном приложении здесь был бы запрос к API
-    // Сейчас просто показываем Snackbar (будет в UI)
     notifyListeners();
   }
 }
-
-// ========== APP PROVIDERS (для main.dart) ==========
 
 class AppProviders {
   static List<SingleChildWidget> get providers => [

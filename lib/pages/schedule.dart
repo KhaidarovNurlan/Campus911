@@ -3,15 +3,14 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
-import '../../app/theme/app_colors.dart';
-import '../../core/constants.dart';
-import '../../core/widgets/custom_button.dart';
-import '../../core/widgets/custom_text_field.dart';
-import '../../data/models.dart';
-import '../../data/providers.dart';
-import '../../services/firestore_service.dart';
+import '../theme/colors.dart';
+import '../core/constants.dart';
+import '../core/widgets/custom_button.dart';
+import '../core/widgets/custom_text_field.dart';
+import '../data/models.dart';
+import '../data/providers.dart';
+import '../data/firestore_service.dart';
 
-/// 📅 Экран расписания
 class ScheduleScreen extends StatefulWidget {
   const ScheduleScreen({super.key});
 
@@ -79,7 +78,7 @@ class _ScheduleScreenState extends State<ScheduleScreen>
           labelColor: AppColors.primary,
           unselectedLabelColor: AppColors.textGrey,
           tabs: AppConstants.weekDays.map((day) {
-            return Tab(text: day.substring(0, 2)); // Пн, Вт, Ср...
+            return Tab(text: day.substring(0, 2));
           }).toList(),
         ),
         actions: [
@@ -120,8 +119,6 @@ class _ScheduleScreenState extends State<ScheduleScreen>
   }
 }
 
-// ========== РАСПИСАНИЕ НА ДЕНЬ ==========
-
 class _DaySchedule extends StatelessWidget {
   final String day;
   final bool isHeadman;
@@ -147,7 +144,6 @@ class _DaySchedule extends StatelessWidget {
   }
 }
 
-// Карточка занятия
 class _LessonCard extends StatelessWidget {
   final LessonModel lesson;
   final bool isHeadman;
@@ -181,7 +177,6 @@ class _LessonCard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              // Цветовая полоска слева
               Container(
                 width: 6,
                 height: 120,
@@ -194,7 +189,6 @@ class _LessonCard extends StatelessWidget {
                 ),
               ),
 
-              // Время
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -222,10 +216,8 @@ class _LessonCard extends StatelessWidget {
                 ),
               ),
 
-              // Вертикальный разделитель
               Container(width: 1, height: 80, color: AppColors.divider),
 
-              // Информация о занятии
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
@@ -335,7 +327,6 @@ class _LessonInfo extends StatelessWidget {
   }
 }
 
-// Пустое расписание
 class _EmptySchedule extends StatelessWidget {
   final String day;
   final bool isHeadman;
@@ -387,8 +378,6 @@ class _EmptySchedule extends StatelessWidget {
   }
 }
 
-// ========== МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ ЗАНЯТИЯ ==========
-
 class _AddLessonBottomSheet extends StatefulWidget {
   final String selectedDay;
 
@@ -436,7 +425,6 @@ class _AddLessonBottomSheetState extends State<_AddLessonBottomSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Заголовок
               Row(
                 children: [
                   Container(
@@ -475,7 +463,6 @@ class _AddLessonBottomSheetState extends State<_AddLessonBottomSheet> {
               ),
               const SizedBox(height: 24),
 
-              // Предмет
               CustomTextField(
                 label: 'Предмет',
                 hint: 'Математика',
@@ -490,7 +477,6 @@ class _AddLessonBottomSheetState extends State<_AddLessonBottomSheet> {
               ),
               const SizedBox(height: 16),
 
-              // Преподаватель
               CustomTextField(
                 label: 'Преподаватель',
                 hint: 'Иванов И.И.',
@@ -505,7 +491,6 @@ class _AddLessonBottomSheetState extends State<_AddLessonBottomSheet> {
               ),
               const SizedBox(height: 16),
 
-              // Кабинет
               CustomTextField(
                 label: 'Кабинет',
                 hint: '305',
@@ -520,7 +505,6 @@ class _AddLessonBottomSheetState extends State<_AddLessonBottomSheet> {
               ),
               const SizedBox(height: 16),
 
-              // Тип занятия
               Text(
                 'Тип занятия',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -557,7 +541,6 @@ class _AddLessonBottomSheetState extends State<_AddLessonBottomSheet> {
               ),
               const SizedBox(height: 16),
 
-              // Время
               Row(
                 children: [
                   Expanded(
@@ -580,7 +563,6 @@ class _AddLessonBottomSheetState extends State<_AddLessonBottomSheet> {
               ),
               const SizedBox(height: 24),
 
-              // Кнопка сохранения
               CustomButton(
                 text: 'Добавить',
                 onPressed: _saveLesson,
@@ -756,8 +738,6 @@ class _TimeSelector extends StatelessWidget {
   }
 }
 
-// ========== ОПЦИИ ЗАНЯТИЯ (ДЛЯ СТАРОСТЫ) ==========
-
 class _LessonOptionsSheet extends StatelessWidget {
   final LessonModel lesson;
 
@@ -837,7 +817,6 @@ class _LessonOptionsSheet extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () async {
-              // ← делаем асинхронной
               context.read<ScheduleProvider>().deleteLesson(lesson.id);
 
               final firestore = FirestoreService();

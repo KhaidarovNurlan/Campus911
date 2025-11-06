@@ -3,22 +3,43 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
-import '../../app/theme/app_colors.dart';
-import '../../core/constants.dart';
-import '../../core/widgets/custom_button.dart';
-import '../../core/widgets/custom_text_field.dart';
-import '../../data/models.dart';
-import '../../data/providers.dart';
+import '../theme/colors.dart';
+import '../core/constants.dart';
+import '../core/widgets/custom_button.dart';
+import '../core/widgets/custom_text_field.dart';
+import '../data/models.dart';
+import '../data/providers.dart';
 
-/// 📰 Экран новостей университета
-class NewsScreen extends StatelessWidget {
+class NewsScreen extends StatefulWidget {
   const NewsScreen({super.key});
+
+  @override
+  State<NewsScreen> createState() => _NewsScreenState();
+}
+
+class _NewsScreenState extends State<NewsScreen> {
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() async {
+      final newsProvider = context.read<NewsProvider>();
+      await newsProvider.loadNews();
+      if (mounted) setState(() => _isLoading = false);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final newsProvider = context.watch<NewsProvider>();
     final userProvider = context.watch<UserProvider>();
     final isHeadman = userProvider.isHeadman;
+
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -91,8 +112,6 @@ class NewsScreen extends StatelessWidget {
   }
 }
 
-// ========== КАРТОЧКА НОВОСТИ ==========
-
 class _NewsCard extends StatelessWidget {
   final NewsModel news;
 
@@ -122,7 +141,6 @@ class _NewsCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Изображение (заглушка с градиентом)
               if (news.imageUrl == null)
                 Container(
                   height: 180,
@@ -148,13 +166,11 @@ class _NewsCard extends StatelessWidget {
                   ),
                 ),
 
-              // Контент
               Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Категория и дата
                     Row(
                       children: [
                         Container(
@@ -200,7 +216,6 @@ class _NewsCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
 
-                    // Заголовок
                     Text(
                       news.title,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -212,7 +227,6 @@ class _NewsCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
 
-                    // Превью текста
                     Text(
                       news.content,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -224,7 +238,6 @@ class _NewsCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
 
-                    // Кнопка "Читать далее"
                     Row(
                       children: [
                         Text(
@@ -293,8 +306,6 @@ class _NewsCard extends StatelessWidget {
   }
 }
 
-// ========== ДЕТАЛИ НОВОСТИ ==========
-
 class _NewsDetailsSheet extends StatelessWidget {
   final NewsModel news;
 
@@ -316,7 +327,6 @@ class _NewsDetailsSheet extends StatelessWidget {
           ),
           child: Column(
             children: [
-              // Хендл
               Center(
                 child: Container(
                   width: 40,
@@ -329,7 +339,6 @@ class _NewsDetailsSheet extends StatelessWidget {
                 ),
               ),
 
-              // Контент
               Expanded(
                 child: SingleChildScrollView(
                   controller: scrollController,
@@ -337,7 +346,6 @@ class _NewsDetailsSheet extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Категория
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
@@ -370,14 +378,12 @@ class _NewsDetailsSheet extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
 
-                      // Заголовок
                       Text(
                         news.title,
                         style: Theme.of(context).textTheme.headlineMedium,
                       ),
                       const SizedBox(height: 12),
 
-                      // Дата
                       Row(
                         children: [
                           const Icon(
@@ -398,7 +404,6 @@ class _NewsDetailsSheet extends StatelessWidget {
                       ),
                       const SizedBox(height: 24),
 
-                      // Контент
                       Text(
                         news.content,
                         style: Theme.of(
@@ -431,8 +436,6 @@ class _NewsDetailsSheet extends StatelessWidget {
     }
   }
 }
-
-// ========== ПУСТЫЕ НОВОСТИ ==========
 
 class _EmptyNews extends StatelessWidget {
   final bool isHeadman;
@@ -484,8 +487,6 @@ class _EmptyNews extends StatelessWidget {
   }
 }
 
-// ========== ДОБАВЛЕНИЕ НОВОСТИ ==========
-
 class _AddNewsBottomSheet extends StatefulWidget {
   const _AddNewsBottomSheet();
 
@@ -528,7 +529,6 @@ class _AddNewsBottomSheetState extends State<_AddNewsBottomSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Заголовок
               Row(
                 children: [
                   Container(
@@ -557,7 +557,6 @@ class _AddNewsBottomSheetState extends State<_AddNewsBottomSheet> {
               ),
               const SizedBox(height: 24),
 
-              // Заголовок новости
               CustomTextField(
                 label: 'Заголовок',
                 hint: 'День открытых дверей',
@@ -572,7 +571,6 @@ class _AddNewsBottomSheetState extends State<_AddNewsBottomSheet> {
               ),
               const SizedBox(height: 16),
 
-              // Текст новости
               CustomTextField(
                 label: 'Текст новости',
                 hint: 'Расскажите подробнее...',
@@ -591,7 +589,6 @@ class _AddNewsBottomSheetState extends State<_AddNewsBottomSheet> {
               ),
               const SizedBox(height: 16),
 
-              // Категория
               Text(
                 'Категория',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -640,7 +637,6 @@ class _AddNewsBottomSheetState extends State<_AddNewsBottomSheet> {
               ),
               const SizedBox(height: 24),
 
-              // Кнопка публикации
               CustomButton(
                 text: 'Опубликовать',
                 onPressed: () => _publishNews(userProvider),
@@ -662,7 +658,7 @@ class _AddNewsBottomSheetState extends State<_AddNewsBottomSheet> {
       content: _contentController.text,
       category: _selectedCategory,
       date: DateTime.now(),
-      university: userProvider.user?.university ?? 'AITU',
+      college: userProvider.user?.college ?? 'AITU',
     );
 
     context.read<NewsProvider>().addNews(news);

@@ -5,12 +5,11 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../../app/theme/app_colors.dart';
-import '../../core/constants.dart';
-import '../../core/widgets/custom_button.dart';
-import '../../core/widgets/custom_text_field.dart';
+import '../theme/colors.dart';
+import '../core/constants.dart';
+import '../core/widgets/custom_button.dart';
+import '../core/widgets/custom_text_field.dart';
 
-/// 🔐 Экран авторизации с онбордингом
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
 
@@ -44,8 +43,6 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 }
 
-// ========== ОНБОРДИНГ ==========
-
 class _OnboardingScreen extends StatelessWidget {
   final PageController controller;
   final VoidCallback onComplete;
@@ -64,15 +61,14 @@ class _OnboardingScreen extends StatelessWidget {
       child: SafeArea(
         child: Column(
           children: [
-            // Кнопка "Пропустить"
             Align(
               alignment: Alignment.topRight,
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: TextButton(
-                  onPressed: onComplete,
+                  onPressed: () => context.go('/login'),
                   child: Text(
-                    'Пропустить',
+                    'Уже есть аккаунт?',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w600,
@@ -82,7 +78,6 @@ class _OnboardingScreen extends StatelessWidget {
               ),
             ),
 
-            // Страницы онбординга
             Expanded(
               child: PageView(
                 controller: controller,
@@ -109,7 +104,6 @@ class _OnboardingScreen extends StatelessWidget {
               ),
             ),
 
-            // Индикатор страниц
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: SmoothPageIndicator(
@@ -125,7 +119,6 @@ class _OnboardingScreen extends StatelessWidget {
               ),
             ),
 
-            // Кнопка "Начать"
             Padding(
               padding: const EdgeInsets.all(24),
               child: CustomButton(
@@ -180,8 +173,6 @@ class _OnboardingPage extends StatelessWidget {
   }
 }
 
-// ========== ФОРМА РЕГИСТРАЦИИ ==========
-
 class _AuthForm extends StatefulWidget {
   const _AuthForm();
 
@@ -193,15 +184,15 @@ class _AuthFormState extends State<_AuthForm> {
   final _formKey = GlobalKey<FormState>();
   final _pageController = PageController();
 
-  // Контроллеры
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
-  // Выбранные значения
   String _role = 'student';
   String _gender = 'Мужской';
-  String _university = 'AITU';
+  String _college = 'AITU';
 
   int _currentStep = 0;
   bool _isLoading = false;
@@ -212,13 +203,15 @@ class _AuthFormState extends State<_AuthForm> {
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  double get _progress => (_currentStep + 1) / 4;
+  double get _progress => (_currentStep + 1) / 5;
 
   void _nextStep() {
-    if (_currentStep < 3) {
+    if (_currentStep < 4) {
       setState(() => _currentStep++);
       _pageController.animateToPage(
         _currentStep,
@@ -246,23 +239,20 @@ class _AuthFormState extends State<_AuthForm> {
     setState(() => _isLoading = true);
 
     try {
-      // ✅ Создаём пользователя в Firebase Auth
       final userCredential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(
             email: _emailController.text.trim(),
-            password:
-                '12345678', // временно фиксированный пароль, можешь добавить поле ввода
+            password: _passwordController.text.trim(),
           );
 
       final user = userCredential.user;
 
       if (user != null) {
-        // ✅ Сохраняем дополнительные данные в Firestore
         await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
           'name': _nameController.text.trim(),
           'email': _emailController.text.trim(),
           'phone': _phoneController.text.trim(),
-          'university': _university,
+          'college': _college,
           'gender': _gender,
           'role': _role,
           'createdAt': FieldValue.serverTimestamp(),
@@ -348,16 +338,18 @@ class _AuthFormState extends State<_AuthForm> {
                     emailController: _emailController,
                     phoneController: _phoneController,
                   ),
-                  _Step4University(
-                    selectedUniversity: _university,
-                    onUniversityChanged: (uni) =>
-                        setState(() => _university = uni),
+                  _Step4College(
+                    selectedCollege: _college,
+                    onCollegeChanged: (coll) => setState(() => _college = coll),
+                  ),
+                  _Step5Password(
+                    passwordController: _passwordController,
+                    confirmPasswordController: _confirmPasswordController,
                   ),
                 ],
               ),
             ),
 
-            // Кнопка "Далее"
             Padding(
               padding: const EdgeInsets.all(24),
               child: CustomButton(
@@ -375,8 +367,6 @@ class _AuthFormState extends State<_AuthForm> {
     );
   }
 }
-
-// ========== ШАГ 1: ВЫБОР РОЛИ ==========
 
 class _Step1Role extends StatelessWidget {
   final String selectedRole;
@@ -501,8 +491,6 @@ class _RoleCard extends StatelessWidget {
   }
 }
 
-// ========== ШАГ 2: ЛИЧНАЯ ИНФОРМАЦИЯ ==========
-
 class _Step2PersonalInfo extends StatelessWidget {
   final TextEditingController nameController;
   final String selectedGender;
@@ -602,8 +590,6 @@ class _Step2PersonalInfo extends StatelessWidget {
   }
 }
 
-// ========== ШАГ 3: КОНТАКТЫ ==========
-
 class _Step3Contacts extends StatelessWidget {
   final TextEditingController emailController;
   final TextEditingController phoneController;
@@ -677,7 +663,6 @@ class _Step3Contacts extends StatelessWidget {
   }
 }
 
-// Форматтер для телефона
 class _PhoneInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
@@ -715,15 +700,13 @@ class _PhoneInputFormatter extends TextInputFormatter {
   }
 }
 
-// ========== ШАГ 4: УНИВЕРСИТЕТ ==========
+class _Step4College extends StatelessWidget {
+  final String selectedCollege;
+  final ValueChanged<String> onCollegeChanged;
 
-class _Step4University extends StatelessWidget {
-  final String selectedUniversity;
-  final ValueChanged<String> onUniversityChanged;
-
-  const _Step4University({
-    required this.selectedUniversity,
-    required this.onUniversityChanged,
+  const _Step4College({
+    required this.selectedCollege,
+    required this.onCollegeChanged,
   });
 
   @override
@@ -739,7 +722,7 @@ class _Step4University extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Выберите ваш колледж или университет',
+            'Выберите ваш колледж',
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(color: AppColors.textGrey),
@@ -747,24 +730,20 @@ class _Step4University extends StatelessWidget {
           const SizedBox(height: 32),
 
           DropdownButtonFormField<String>(
-            initialValue: selectedUniversity,
+            initialValue: selectedCollege,
             isExpanded: true,
             decoration: const InputDecoration(
-              labelText: 'Университет',
+              labelText: 'Колледж',
               prefixIcon: Icon(Icons.school_rounded),
             ),
-            items: AppConstants.universities.map((uni) {
+            items: AppConstants.colleges.map((coll) {
               return DropdownMenuItem(
-                value: uni,
-                child: Text(
-                  uni,
-                  overflow: TextOverflow.ellipsis, // ПОДРЕДАЧ!
-                  maxLines: 1, // ПОДРЕДАЧ!
-                ),
+                value: coll,
+                child: Text(coll, overflow: TextOverflow.ellipsis, maxLines: 1),
               );
             }).toList(),
             onChanged: (value) {
-              if (value != null) onUniversityChanged(value);
+              if (value != null) onCollegeChanged(value);
             },
           ),
           const SizedBox(height: 24),
@@ -790,6 +769,69 @@ class _Step4University extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Step5Password extends StatelessWidget {
+  final TextEditingController passwordController;
+  final TextEditingController confirmPasswordController;
+
+  const _Step5Password({
+    required this.passwordController,
+    required this.confirmPasswordController,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Пароль', style: Theme.of(context).textTheme.headlineMedium),
+          const SizedBox(height: 32),
+          CustomTextField(
+            label: 'Пароль',
+            hint: 'Введите пароль',
+            controller: passwordController,
+            obscureText: true,
+            prefixIcon: const Icon(Icons.lock_rounded),
+            validator: (value) {
+              if (value == null || value.isEmpty) return 'Введите пароль';
+
+              if (value.length < 8) {
+                return 'Пароль должен быть не менее 8 символов';
+              }
+
+              if (!RegExp(r'[A-Z]').hasMatch(value)) {
+                return 'Пароль должен содержать хотя бы одну заглавную букву';
+              }
+
+              if (!RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(value)) {
+                return 'Пароль должен содержать хотя бы один специальный символ';
+              }
+
+              return null;
+            },
+          ),
+          const SizedBox(height: 24),
+          CustomTextField(
+            label: 'Подтвердите пароль',
+            hint: 'Повторите пароль',
+            controller: confirmPasswordController,
+            obscureText: true,
+            prefixIcon: const Icon(Icons.lock_rounded),
+            validator: (value) {
+              if (value == null || value.isEmpty) return 'Подтвердите пароль';
+              if (value != passwordController.text) {
+                return 'Пароли не совпадают';
+              }
+              return null;
+            },
           ),
         ],
       ),

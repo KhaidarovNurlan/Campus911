@@ -1,15 +1,11 @@
-// 📦 Все модели данных приложения
-
-// ========== USER MODEL ==========
-
 class UserModel {
   final String id;
   final String name;
   final String email;
   final String phone;
-  final String university;
+  final String college;
   final String gender;
-  final String role; // 'student' или 'headman'
+  final String role;
   final String? photoUrl;
 
   UserModel({
@@ -17,7 +13,7 @@ class UserModel {
     required this.name,
     required this.email,
     required this.phone,
-    required this.university,
+    required this.college,
     required this.gender,
     required this.role,
     this.photoUrl,
@@ -27,8 +23,6 @@ class UserModel {
   bool get isStudent => role == 'student';
 }
 
-// ========== SCHEDULE MODEL ==========
-
 class LessonModel {
   final String id;
   final String subject;
@@ -36,8 +30,8 @@ class LessonModel {
   final String room;
   final DateTime startTime;
   final DateTime endTime;
-  final String type; // 'lecture', 'practice', 'lab'
-  final String dayOfWeek; // 'Понедельник', 'Вторник', и т.д.
+  final String type;
+  final String dayOfWeek;
 
   LessonModel({
     required this.id,
@@ -69,8 +63,6 @@ class LessonModel {
     }
   }
 }
-
-// ========== CHAT MODEL ==========
 
 class ChatModel {
   final String id;
@@ -109,8 +101,6 @@ class MessageModel {
     required this.isMe,
   });
 }
-
-// ========== EXPENSE MODEL ==========
 
 class ExpenseModel {
   final String id;
@@ -174,8 +164,6 @@ class ExpenseModel {
   }
 }
 
-// ========== TEACHER MODEL ==========
-
 class TeacherModel {
   final String id;
   final String name;
@@ -216,17 +204,14 @@ class ReviewModel {
   String get displayName => isAnonymous ? 'Аноним' : studentName;
 }
 
-// ========== NEWS MODEL ==========
-
 class NewsModel {
   final String id;
   final String title;
   final String content;
-  final String
-  category; // 'academic', 'events', 'achievements', 'announcements'
+  final String category;
   final DateTime date;
   final String? imageUrl;
-  final String university;
+  final String college;
 
   NewsModel({
     required this.id,
@@ -235,7 +220,7 @@ class NewsModel {
     required this.category,
     required this.date,
     this.imageUrl,
-    required this.university,
+    required this.college,
   });
 
   String get categoryEmoji {
@@ -269,13 +254,11 @@ class NewsModel {
   }
 }
 
-// ========== EVENT MODEL (для календаря) ==========
-
 class EventModel {
   final String id;
   final String title;
   final DateTime date;
-  final String type; // 'academic', 'deadline', 'personal', 'news'
+  final String type;
   final String? description;
   final bool hasReminder;
 
@@ -303,8 +286,6 @@ class EventModel {
     }
   }
 }
-
-// ========== ATTENDANCE MODEL ==========
 
 class StudentAttendanceModel {
   final String id;

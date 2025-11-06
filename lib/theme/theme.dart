@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'app_colors.dart';
+import 'colors.dart';
 
-/// 🎨 Темы приложения (светлая и тёмная)
 class AppTheme {
   AppTheme._();
 
-  // ========== СВЕТЛАЯ ТЕМА ==========
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
@@ -140,7 +138,6 @@ class AppTheme {
     );
   }
 
-  // ========== ТЁМНАЯ ТЕМА ==========
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,

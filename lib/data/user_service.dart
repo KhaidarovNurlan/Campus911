@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../data/models.dart'; // путь к UserModel
+import 'models.dart';
 
 class UserService {
   final _firestore = FirebaseFirestore.instance;
@@ -19,7 +19,7 @@ class UserService {
       name: data['name'] ?? '',
       email: data['email'] ?? '',
       phone: data['phone'] ?? '',
-      university: data['university'] ?? '',
+      college: data['college'] ?? '',
       gender: data['gender'] ?? '',
       role: data['role'] ?? 'student',
       photoUrl: data['photoUrl'],

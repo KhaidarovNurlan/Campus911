@@ -1,13 +1,9 @@
-// 🔧 Константы приложения
-
 class AppConstants {
   AppConstants._();
 
-  // ========== ОБЩИЕ ==========
   static const String appName = 'Campus911';
   static const String appVersion = '1.0.0';
 
-  // ========== РАЗМЕРЫ ==========
   static const double paddingSmall = 8.0;
   static const double paddingMedium = 16.0;
   static const double paddingLarge = 24.0;
@@ -20,22 +16,19 @@ class AppConstants {
   static const double iconSizeMedium = 24.0;
   static const double iconSizeLarge = 32.0;
 
-  // ========== АНИМАЦИИ ==========
   static const Duration animationDuration = Duration(milliseconds: 300);
   static const Duration animationDurationFast = Duration(milliseconds: 150);
   static const Duration animationDurationSlow = Duration(milliseconds: 500);
 
-  // ========== УНИВЕРСИТЕТЫ ==========
-  static const List<String> universities = [
+  static const List<String> colleges = [
     'AITU',
-    'MNU',
-    'SDU',
-    'Nazarbayev University',
-    'Казахстанско-Британский технический университет',
-    'Евразийский национальный университет',
+    'KILC',
+    'Turan',
+    'Urban College',
+    'Astana Polytechnic',
+    'Колледж сервиса и туризма',
   ];
 
-  // ========== ГЕНДЕРЫ ==========
   static const List<String> genders = [
     'Мужской',
     'Женский',
@@ -43,14 +36,12 @@ class AppConstants {
     'Не указывать',
   ];
 
-  // ========== ТИПЫ ЗАНЯТИЙ ==========
   static const List<String> lessonTypes = [
     'Лекция',
     'Практика',
     'Лабораторная',
   ];
 
-  // ========== КАТЕГОРИИ РАСХОДОВ ==========
   static const List<Map<String, String>> expenseCategories = [
     {'id': 'transport', 'name': 'Транспорт', 'emoji': '🚌'},
     {'id': 'food', 'name': 'Еда', 'emoji': '🍔'},
@@ -62,7 +53,6 @@ class AppConstants {
     {'id': 'communication', 'name': 'Связь', 'emoji': '📱'},
   ];
 
-  // ========== КАТЕГОРИИ НОВОСТЕЙ ==========
   static const List<Map<String, String>> newsCategories = [
     {'id': 'academic', 'name': 'Академические', 'emoji': '🎓'},
     {'id': 'events', 'name': 'События', 'emoji': '🎉'},
@@ -70,7 +60,6 @@ class AppConstants {
     {'id': 'announcements', 'name': 'Объявления', 'emoji': '📢'},
   ];
 
-  // ========== ТИПЫ СОБЫТИЙ ==========
   static const List<Map<String, String>> eventTypes = [
     {'id': 'academic', 'name': 'Учебные', 'emoji': '📚'},
     {'id': 'deadline', 'name': 'Дедлайны', 'emoji': '⏰'},
@@ -78,25 +67,22 @@ class AppConstants {
     {'id': 'news', 'name': 'Новости', 'emoji': '📢'},
   ];
 
-  // ========== ВРЕМЯ НАПОМИНАНИЙ ==========
   static const List<Map<String, dynamic>> reminderTimes = [
     {'value': 60, 'label': 'За 1 час'},
     {'value': 30, 'label': 'За 30 минут'},
     {'value': 15, 'label': 'За 15 минут'},
   ];
 
-  // ========== ДНИ НЕДЕЛИ ==========
   static const List<String> weekDays = [
-    'Понедельник',
-    'Вторник',
-    'Среда',
-    'Четверг',
-    'Пятница',
-    'Суббота',
-    'Воскресенье',
+    'Пн',
+    'Вт',
+    'Ср',
+    'Чт',
+    'Пт',
+    'Сб',
+    'Вс',
   ];
 
-  // ========== ЗВУКИ УВЕДОМЛЕНИЙ ==========
   static const List<String> notificationSounds = [
     'По умолчанию',
     'Мелодичный',
@@ -104,14 +90,12 @@ class AppConstants {
     'Без звука',
   ];
 
-  // ========== РЕГУЛЯРНЫЕ ВЫРАЖЕНИЯ ==========
   static final RegExp emailRegex = RegExp(
     r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
   );
 
   static final RegExp phoneRegex = RegExp(r'^\+7 \(\d{3}\) \d{3}-\d{2}-\d{2}$');
 
-  // ========== ТЕКСТОВЫЕ КОНСТАНТЫ ==========
   static const String emptyScheduleMessage =
       'Расписание на этот день пока не добавлено';
   static const String emptyChatsMessage = 'У вас пока нет чатов';
@@ -119,7 +103,6 @@ class AppConstants {
   static const String emptyNewsMessage = 'Новостей пока нет';
   static const String emptyReviewsMessage = 'Отзывов пока нет';
 
-  // ========== AI BOT ТРИГГЕРЫ ==========
   static const Map<String, List<String>> aiBotTriggers = {
     'greeting': ['привет', 'здравствуй', 'хай', 'йо', 'hello', 'hi'],
     'schedule': ['расписание', 'когда', 'пара', 'урок', 'занятие'],

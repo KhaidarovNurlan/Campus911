@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 
-import '../../app/theme/app_colors.dart';
+import '../../theme/colors.dart';
 import '../../core/widgets/custom_button.dart';
 import '../../data/providers.dart';
 

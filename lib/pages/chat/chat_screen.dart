@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
-import '../../app/theme/app_colors.dart';
+import '../../theme/colors.dart';
 import '../../data/providers.dart';
 
 /// 💬 Экран чата
