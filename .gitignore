@@ -1,0 +1,13 @@
+.vscode/
+
+.dart_tool/
+/build/
+.packages
+.flutter-plugins-dependencies
+pubspec.lock
+
+lib/firebase_options.dart
+android/app/google-services.json
+firebase.json
+
+.env
