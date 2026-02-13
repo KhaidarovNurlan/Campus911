@@ -12,9 +12,7 @@ void main() {
     );
     final mockAuth = MockFirebaseAuth(mockUser: user);
     final repository = AuthRepository(auth: mockAuth);
-
     await repository.signIn('test@example.com', 'password123');
-
     expect(mockAuth.currentUser, isNotNull);
     expect(mockAuth.currentUser!.email, 'test@example.com');
   });
@@ -22,20 +20,14 @@ void main() {
   test('Выход из аккаунта очищает данные прошлого user-а', () async {
     final mockAuth = MockFirebaseAuth(signedIn: true);
     final repository = AuthRepository(auth: mockAuth);
-
     await repository.signOut();
     expect(mockAuth.currentUser, isNull);
   });
 
   test('Сохранение флага первого входа в SharedPreferences', () async {
-    // Настраиваем мок для SharedPreferences
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
-
-    // Логика: имитируем сохранение данных после входа
     await prefs.setBool('is_logged_in', true);
-
-    // Проверяем, что данные реально записались
     final isLoggedIn = prefs.getBool('is_logged_in');
     expect(isLoggedIn, true);
   });
