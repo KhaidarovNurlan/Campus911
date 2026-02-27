@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
 import 'models.dart';
 import 'firestore_service.dart';
-import 'ai_chat_provider.dart';
 
 class ThemeProvider extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.light;
@@ -65,7 +66,7 @@ class UserProvider extends ChangeNotifier {
 class ScheduleProvider extends ChangeNotifier {
   final _firestore = FirestoreService();
   final List<LessonModel> _lessons = [];
-  String _selectedDay = 'Понедельник';
+  String _selectedDay = 'Monday';
   bool _isLoading = false;
 
   List<LessonModel> get lessons => _lessons;
@@ -81,7 +82,7 @@ class ScheduleProvider extends ChangeNotifier {
       _lessons.clear();
       _lessons.addAll(fetched);
     } catch (e) {
-      debugPrint('Ошибка загрузки расписания: $e');
+      debugPrint('Error loading schedule: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -101,6 +102,15 @@ class ScheduleProvider extends ChangeNotifier {
     await _firestore.addLesson(lesson);
     _lessons.add(lesson);
     notifyListeners();
+  }
+
+  Future<void> updateLesson(LessonModel updatedLesson) async {
+    await _firestore.updateLesson(updatedLesson);
+    final index = _lessons.indexWhere((l) => l.id == updatedLesson.id);
+    if (index != -1) {
+      _lessons[index] = updatedLesson;
+      notifyListeners();
+    }
   }
 
   Future<void> deleteLesson(String id) async {
@@ -245,15 +255,15 @@ class ReviewProvider extends ChangeNotifier {
     ),
     TeacherModel(
       id: '2',
-      name: 'Mr. Sintikov',
-      subject: 'Микроконтроллеры',
+      name: 'Мистер Синтиков',
+      subject: 'Ардуино',
       rating: 5,
       reviewCount: 0,
     ),
     TeacherModel(
       id: '3',
       name: 'Алмас Айдарович',
-      subject: 'Java',
+      subject: 'Джава',
       rating: 5,
       reviewCount: 0,
     ),
@@ -311,17 +321,96 @@ class ReviewProvider extends ChangeNotifier {
   }
 }
 
+class ChatProvider extends ChangeNotifier {
+  final List<MessageModel> _messages = [];
+  final FirestoreService _firestore = FirestoreService();
+  bool isTyping = false;
+  ChatSession? _chatSession;
+  final GenerativeModel _model = GenerativeModel(
+    model: 'gemini-2.5-flash',
+    apiKey: dotenv.env['GEMINI_API_KEY'] ?? '',
+  );
+
+  List<MessageModel> get messages => _messages;
+
+  Future<void> loadChatHistory(String userId) async {
+    final history = await _firestore.getMessages(userId);
+    _messages.clear();
+    _messages.addAll(history);
+    _chatSession = null;
+    notifyListeners();
+  }
+
+  Future<void> sendMessage({
+    required String text,
+    required String userId,
+    required String userName,
+  }) async {
+    if (text.trim().isEmpty) return;
+
+    final userMsg = MessageModel(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      text: text,
+      senderId: userId,
+      senderName: userName,
+      timestamp: DateTime.now(),
+      isMe: true,
+    );
+
+    _messages.add(userMsg);
+    notifyListeners();
+    await _firestore.saveMessage(userId, userMsg);
+
+    isTyping = true;
+    notifyListeners();
+
+    try {
+      _chatSession ??= _model.startChat(
+        history: _messages.map((m) => Content(
+          m.isMe ? 'user' : 'model',
+          [TextPart(m.text)]
+        )).toList(),
+      );
+
+      final response = await _chatSession!.sendMessage(Content.text(text));
+      final botText = response.text ?? '...';
+
+      final botMsg = MessageModel(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        text: botText,
+        senderId: 'bot',
+        senderName: 'AI-friend',
+        timestamp: DateTime.now(),
+        isMe: false,
+      );
+
+      _messages.add(botMsg);
+      await _firestore.saveMessage(userId, botMsg);
+    } catch (e) {
+      debugPrint("AI Chat Error: $e");
+    } finally {
+      isTyping = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> clearChatHistory(String userId) async {
+    await _firestore.clearChatHistory(userId);
+    _messages.clear();
+    _chatSession = null;
+    notifyListeners();
+  }
+}
+
 class AppProviders {
   static List<SingleChildWidget> get providers => [
     ChangeNotifierProvider<ThemeProvider>(create: (_) => ThemeProvider()),
     ChangeNotifierProvider<UserProvider>(create: (_) => UserProvider()),
     ChangeNotifierProvider<ScheduleProvider>(create: (_) => ScheduleProvider()),
-    ChangeNotifierProvider<AIChatProvider>(create: (_) => AIChatProvider()),
+    ChangeNotifierProvider<ChatProvider>(create: (_) => ChatProvider()),
     ChangeNotifierProvider<ExpenseProvider>(create: (_) => ExpenseProvider()),
     ChangeNotifierProvider<NewsProvider>(create: (_) => NewsProvider()),
     ChangeNotifierProvider<CalendarProvider>(create: (_) => CalendarProvider()),
-    ChangeNotifierProvider<ReviewProvider>(
-      create: (_) => ReviewProvider(),
-    ),
+    ChangeNotifierProvider<ReviewProvider>(create: (_) => ReviewProvider()),
   ];
 }

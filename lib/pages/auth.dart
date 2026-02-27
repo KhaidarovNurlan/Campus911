@@ -6,7 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
 
 import '../theme/colors.dart';
-import '../core/constants.dart';
+import '../theme/constants.dart';
 import '../theme/custom_button.dart';
 import '../theme/custom_text_field.dart';
 
@@ -106,7 +106,7 @@ class _OnboardingScreenState extends State<_OnboardingScreen> {
                 child: TextButton(
                   onPressed: () => context.go('/login'),
                   child: Text(
-                    'Уже есть аккаунт?',
+                    'Already have an account?',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w600,
@@ -121,19 +121,19 @@ class _OnboardingScreenState extends State<_OnboardingScreen> {
                 controller: widget.controller,
                 children: [
                   _OnboardingPage(
+                    emoji: '🤖',
+                    title: 'AI-friend nearby',
+                    description: 'A smart bot will help with homework, deadlines, and advice.',
+                  ),
+                  _OnboardingPage(
                     emoji: '📚',
-                    title: 'Управляй расписанием',
-                    description: 'Всё расписание в одном месте. Никогда не пропусти пару!',
+                    title: 'Manage your schedule',
+                    description: 'The entire schedule in one place. Never miss a substitution again!',
                   ),
                   _OnboardingPage(
                     emoji: '💬',
-                    title: 'Общайся с группой',
-                    description: 'Чаты с одногруппниками, обмен файлами и новостями.',
-                  ),
-                  _OnboardingPage(
-                    emoji: '🤖',
-                    title: 'AI-помощник рядом',
-                    description: 'Умный бот поможет с расписанием, дедлайнами и советами.',
+                    title: 'Reviews about teachers',
+                    description: 'Get to know your teachers before your first lesson with them!',
                   ),
                 ],
               ),
@@ -157,7 +157,7 @@ class _OnboardingScreenState extends State<_OnboardingScreen> {
             Padding(
               padding: const EdgeInsets.all(24),
               child: CustomButton(
-                text: 'Начать',
+                text: 'Start',
                 onPressed: widget.onComplete,
                 icon: Icons.arrow_forward_rounded,
               ),
@@ -231,6 +231,7 @@ class _AuthFormState extends State<_AuthForm> {
   late List<String> _currentGroups;
 
   bool _isLoading = false;
+  bool _isHeadmanTaken = false;
 
   @override
   void initState() {
@@ -238,6 +239,31 @@ class _AuthFormState extends State<_AuthForm> {
     _college = AppConstants.collegesWithGroups.keys.first;
     _currentGroups = AppConstants.collegesWithGroups[_college]!;
     _selectedGroup = _currentGroups.first;
+
+    _checkHeadmanAvailability();
+  }
+
+  Future<void> _checkHeadmanAvailability() async {
+    if (_selectedGroup == null) return;
+
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('college', isEqualTo: _college)
+          .where('groupName', isEqualTo: _selectedGroup)
+          .where('role', isEqualTo: 'headman')
+          .limit(1)
+          .get();
+
+      setState(() {
+        _isHeadmanTaken = snapshot.docs.isNotEmpty;
+        if (_isHeadmanTaken && _role == 'headman') {
+          _role = 'student';
+        }
+      });
+    } catch (e) {
+      debugPrint('Headman verification error: $e');
+    }
   }
 
   @override
@@ -255,6 +281,27 @@ class _AuthFormState extends State<_AuthForm> {
     setState(() => _isLoading = true);
 
     try {
+      if (_role == 'headman') {
+        final existing = await FirebaseFirestore.instance
+            .collection('users')
+            .where('college', isEqualTo: _college)
+            .where('groupName', isEqualTo: _selectedGroup)
+            .where('role', isEqualTo: 'headman')
+            .limit(1)
+            .get();
+
+        if (existing.docs.isNotEmpty) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('The role of headman in this group is already taken!')),
+            );
+          }
+          _checkHeadmanAvailability();
+          setState(() => _isLoading = false);
+          return;
+        }
+      }
+
       final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
@@ -269,6 +316,7 @@ class _AuthFormState extends State<_AuthForm> {
           'college': _college,
           'groupName': _selectedGroup,
           'role': _role,
+          'uid': user.uid,
           'createdAt': FieldValue.serverTimestamp(),
         });
 
@@ -276,8 +324,8 @@ class _AuthFormState extends State<_AuthForm> {
         context.go('/home');
       }
     } on FirebaseAuthException catch (e) {
-      String message = 'Ошибка регистрации';
-      if (e.code == 'email-already-in-use') message = 'Этот email уже используется';
+      String message = 'Authorization error';
+      if (e.code == 'email-already-in-use') message = 'This email is already in use';
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
       }
@@ -290,7 +338,7 @@ class _AuthFormState extends State<_AuthForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Регистрация'),
+        title: const Text('Authorization'),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
@@ -305,36 +353,40 @@ class _AuthFormState extends State<_AuthForm> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Ваша роль',
+                'Your role',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               _RoleCard(
                 emoji: '♟️',
-                title: 'Обычный студент',
-                description: 'Управление личными расходами, просмотр календаря, новостей',
+                title: 'Student',
+                description: 'Manage personal expenses, view calendar, news',
                 isSelected: _role == 'student',
                 onTap: () => setState(() => _role = 'student'),
               ),
               const SizedBox(height: 12),
-              _RoleCard(
-                emoji: '👑',
-                title: 'Староста группы',
-                description: 'Базовые функции + управление раписанием, группой',
-                isSelected: _role == 'headman',
-                onTap: () => setState(() => _role = 'headman'),
+              Opacity(
+                opacity: _isHeadmanTaken ? 0.5 : 1.0,
+                child: _RoleCard(
+                  emoji: '👑',
+                  title: _isHeadmanTaken ? 'Headman (already taken)' : 'Headman',
+                  description: _isHeadmanTaken
+                      ? 'This group already has a headman.'
+                      : 'Basic functions + schedule and group management',
+                  isSelected: _role == 'headman',
+                  onTap: _isHeadmanTaken
+                      ? () {}
+                      : () => setState(() => _role = 'headman'),
+                ),
               ),
 
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 24),
-                child: Divider(),
-              ),
+              const SizedBox(height: 25),
 
               DropdownButtonFormField<String>(
                 initialValue: _college,
                 isExpanded: true,
                 decoration: const InputDecoration(
-                  labelText: 'Колледж',
+                  labelText: 'College',
                   prefixIcon: Icon(Icons.school_outlined),
                 ),
                 items: AppConstants.collegesWithGroups.keys.map((coll) {
@@ -347,6 +399,7 @@ class _AuthFormState extends State<_AuthForm> {
                       _currentGroups = AppConstants.collegesWithGroups[_college]!;
                       _selectedGroup = _currentGroups.first;
                     });
+                    _checkHeadmanAvailability();
                   }
                 },
               ),
@@ -356,7 +409,7 @@ class _AuthFormState extends State<_AuthForm> {
                 initialValue: _selectedGroup,
                 isExpanded: true,
                 decoration: const InputDecoration(
-                  labelText: 'Группа',
+                  labelText: 'Group',
                   prefixIcon: Icon(Icons.group_outlined),
                 ),
                 items: _currentGroups.map((group) {
@@ -364,56 +417,62 @@ class _AuthFormState extends State<_AuthForm> {
                 }).toList(),
                 onChanged: (value) {
                   setState(() => _selectedGroup = value);
+                  _checkHeadmanAvailability();
                 },
-                validator: (value) => value == null ? 'Выберите группу' : null,
+                validator: (value) => value == null ? 'Choose your group' : null,
               ),
 
-              const SizedBox(height: 20),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 10),
+                child: Divider(),
+              ),
 
               CustomTextField(
-                label: 'ФИО',
+                label: 'Full name',
                 hint: '...',
                 controller: _nameController,
                 prefixIcon: const Icon(Icons.person_outline_rounded),
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Введите ФИО';
+                  if (value == null || value.isEmpty) return 'Enter your full name';
+                  final words = value.trim().split(RegExp(r'\s+'));
+                  if (words.length < 2) {
+                    return 'Last name and first name are required';
+                  }
                   return null;
                 },
               ),
               const SizedBox(height: 20),
 
               CustomTextField(
-                label: 'Электронная почта',
+                label: 'E-mail',
                 hint: '...',
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 prefixIcon: const Icon(Icons.email_outlined),
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Введите email';
-                  if (!AppConstants.emailRegex.hasMatch(value)) return 'Некорректный email';
+                  if (value == null || value.isEmpty) return 'Enter e-mail';
+                  if (!RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(value)) return 'Incorrect e-mail';
                   return null;
                 },
               ),
               const SizedBox(height: 20),
 
               CustomTextField(
-                label: 'Пароль',
+                label: 'Password',
                 hint: '...',
                 controller: _passwordController,
                 obscureText: true,
                 prefixIcon: const Icon(Icons.lock_outline_rounded),
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Введите пароль';
-                  }
+                  if (value == null || value.isEmpty) return 'Enter password';
                   if (value.length < 8) {
-                    return 'Пароль должен содержать минимум 8 символов';
+                    return 'Must contain at least 8 characters';
                   }
                   if (!RegExp(r'[A-Z]').hasMatch(value)) {
-                    return 'Пароль должен содержать заглавную букву';
+                    return 'Must contain at least one capital letter';
                   }
                   if (!RegExp(r'[!@#\$%\^&\*\(\)_\+\-=\[\]\{\};:"\\|,.<>\/?]').hasMatch(value)) {
-                    return 'Пароль должен содержать специальный символ';
+                    return 'Must contain at least one special symbol';
                   }
                   return null;
                 },
@@ -421,13 +480,13 @@ class _AuthFormState extends State<_AuthForm> {
               const SizedBox(height: 20),
 
               CustomTextField(
-                label: 'Повторите пароль',
+                label: 'Confirm password',
                 hint: '...',
                 controller: _confirmPasswordController,
                 obscureText: true,
                 prefixIcon: const Icon(Icons.lock_reset_rounded),
                 validator: (value) {
-                  if (value != _passwordController.text) return 'Пароли не совпадают';
+                  if (value != _passwordController.text) return 'The passwords do not match';
                   return null;
                 },
               ),
@@ -435,7 +494,7 @@ class _AuthFormState extends State<_AuthForm> {
               const SizedBox(height: 32),
 
               CustomButton(
-                text: 'Создать аккаунт',
+                text: 'Create an account',
                 onPressed: _register,
                 isLoading: _isLoading,
                 icon: Icons.person_add_alt_1_rounded,

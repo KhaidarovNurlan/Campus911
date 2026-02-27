@@ -65,10 +65,9 @@ class LessonModel {
 
   String get typeText {
     switch (type) {
-      case 'lecture': return 'Лекция';
-      case 'practice': return 'Практика';
-      case 'lab': return 'Лабораторная';
-      default: return 'Занятие';
+      case 'lecture': return 'Lecture';
+      case 'practice': return 'Practice';
+      default: return 'Lesson';
     }
   }
 }
@@ -78,7 +77,6 @@ class MessageModel {
   final String text;
   final String senderId;
   final String senderName;
-  final String groupId;
   final DateTime timestamp;
   final bool isMe;
 
@@ -87,10 +85,30 @@ class MessageModel {
     required this.text,
     required this.senderId,
     required this.senderName,
-    required this.groupId,
     required this.timestamp,
     required this.isMe,
   });
+
+  factory MessageModel.fromMap(String id, Map<String, dynamic> map) {
+    return MessageModel(
+      id: id,
+      text: map['text'] ?? '',
+      senderId: map['senderId'] ?? '',
+      senderName: map['senderName'] ?? '',
+      timestamp: (map['timestamp'] as Timestamp).toDate(),
+      isMe: map['isMe'] ?? false,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'text': text,
+      'senderId': senderId,
+      'senderName': senderName,
+      'timestamp': timestamp,
+      'isMe': isMe,
+    };
+  }
 }
 
 class ExpenseModel {
@@ -134,23 +152,23 @@ class ExpenseModel {
   String get categoryName {
     switch (category) {
       case 'transport':
-        return 'Транспорт';
+        return 'Transport';
       case 'food':
-        return 'Еда';
+        return 'Food';
       case 'books':
-        return 'Книги';
+        return 'Books';
       case 'housing':
-        return 'Проживание';
+        return 'Housing';
       case 'entertainment':
-        return 'Развлечения';
+        return 'Entertainment';
       case 'health':
-        return 'Здоровье';
+        return 'Health';
       case 'clothing':
-        return 'Одежда';
+        return 'Clothing';
       case 'communication':
-        return 'Связь';
+        return 'Communication';
       default:
-        return 'Другое';
+        return 'Other';
     }
   }
 }
@@ -169,6 +187,7 @@ class TeacherModel {
     required this.rating,
     required this.reviewCount,
   });
+
   factory TeacherModel.fromMap(Map<String, dynamic> map) {
     return TeacherModel(
       id: map['id'] ?? '',
@@ -224,7 +243,7 @@ class ReviewModel {
     this.isAnonymous = false,
   });
 
-  String get displayName => isAnonymous ? 'Аноним' : studentName;
+  String get displayName => isAnonymous ? 'Anonymous' : studentName;
 
   factory ReviewModel.fromMap(Map<String, dynamic> map) {
     return ReviewModel(
@@ -259,7 +278,6 @@ class NewsModel {
   final String content;
   final String category;
   final DateTime date;
-  final String? imageUrl;
   final String college;
 
   NewsModel({
@@ -268,20 +286,17 @@ class NewsModel {
     required this.content,
     required this.category,
     required this.date,
-    this.imageUrl,
     required this.college,
   });
 
   String get categoryEmoji {
     switch (category) {
+      case 'events':
+        return '📢';
       case 'academic':
         return '🎓';
-      case 'events':
-        return '🎉';
-      case 'achievements':
-        return '🏆';
-      case 'announcements':
-        return '📢';
+      case 'sporting':
+        return '🏀';
       default:
         return '📰';
     }
@@ -289,16 +304,14 @@ class NewsModel {
 
   String get categoryName {
     switch (category) {
-      case 'academic':
-        return 'Академические';
       case 'events':
-        return 'События';
-      case 'achievements':
-        return 'Достижения';
-      case 'announcements':
-        return 'Объявления';
+        return 'Events';
+      case 'academic':
+        return 'Academic';
+      case 'sporting':
+        return 'Sporting';
       default:
-        return 'Новости';
+        return '';
     }
   }
 }

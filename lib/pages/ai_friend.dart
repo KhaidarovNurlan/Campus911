@@ -6,7 +6,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../theme/colors.dart';
 import '../data/providers.dart';
-import '../data/ai_chat_provider.dart';
 
 class AIScreen extends StatefulWidget {
   const AIScreen({super.key});
@@ -20,16 +19,40 @@ class _AIScreenState extends State<AIScreen> {
   final ScrollController _scrollController = ScrollController();
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userProvider = context.read<UserProvider>();
+      if (userProvider.user != null) {
+        context.read<ChatProvider>().loadChatHistory(userProvider.user!.id);
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
+  void _scrollToBottom() {
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final aiProvider = context.watch<AIChatProvider>();
+    final chatProvider = context.watch<ChatProvider>();
     final userProvider = context.watch<UserProvider>();
+    final user = userProvider.user;
 
     return Scaffold(
       appBar: AppBar(
@@ -46,13 +69,13 @@ class _AIScreenState extends State<AIScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Верта',
+                    'Verta',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   Text(
-                    'Всегда на связи 🟢',
+                    'Always in touch 🟢',
                     style: Theme.of(
                       context,
                     ).textTheme.bodySmall?.copyWith(color: AppColors.success),
@@ -65,83 +88,85 @@ class _AIScreenState extends State<AIScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_outline_rounded),
-            tooltip: 'Очистить историю',
-            onPressed: () => _showClearConfirmation(context, aiProvider),
+            tooltip: 'Clear history',
+            onPressed: user == null
+                ? null
+                : () => _showClearConfirmation(context, chatProvider, user.id),
           ),
         ],
       ),
       body: Column(
         children: [
           Expanded(
-            child: aiProvider.messages.isEmpty
+            child: chatProvider.messages.isEmpty
                 ? _EmptyAIChat(
-                    userName:
-                        userProvider.user?.name.split(' ').first ?? 'Студент',
+                    userName: user?.name.split(' ')[1] ?? 'student',
                   )
                 : ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.all(16),
-                    itemCount: aiProvider.messages.length,
+                    itemCount: chatProvider.messages.length,
                     itemBuilder: (context, index) {
                       return _AIMessageBubble(
-                        message: aiProvider.messages[index],
+                        message: chatProvider.messages[index],
                       );
                     },
                   ),
           ),
 
-          if (aiProvider.isTyping) _TypingIndicator(),
+          if (chatProvider.isTyping) _TypingIndicator(),
 
           _AIMessageInput(
             controller: _messageController,
-            onSend: () => _sendMessage(aiProvider),
+            onSend: () => _handleSend(chatProvider, userProvider),
           ),
         ],
       ),
     );
   }
 
-  void _sendMessage(AIChatProvider aiProvider) {
-    if (_messageController.text.trim().isEmpty) return;
+  void _handleSend(ChatProvider chatProvider, UserProvider userProvider) {
+    final user = userProvider.user;
+    if (user == null || _messageController.text.trim().isEmpty) return;
 
-    aiProvider.sendMessage(_messageController.text.trim());
+    final text = _messageController.text.trim();
     _messageController.clear();
 
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
+    chatProvider.sendMessage(
+      text: text,
+      userId: user.id,
+      userName: user.name,
+    );
+
+    _scrollToBottom();
   }
 
-  void _showClearConfirmation(BuildContext context, AIChatProvider aiProvider) {
+  void _showClearConfirmation(BuildContext context, ChatProvider chatProvider, String userId) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Очистить историю?'),
-        content: const Text('Все сообщения будут удалены безвозвратно.'),
+        title: const Text('Clear history?'),
+        content: const Text('All messages will be deleted permanently.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Отмена'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
-              aiProvider.clearMessages();
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('🗑️ История очищена'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
+              await chatProvider.clearChatHistory(userId);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('🗑️ History cleared'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Очистить'),
+            child: const Text('Clear'),
           ),
         ],
       ),
@@ -360,7 +385,7 @@ class _EmptyAIChat extends StatelessWidget {
                 .scale(begin: const Offset(0.8, 0.8), duration: 500.ms),
             const SizedBox(height: 24),
             Text(
-                  'Привет, $userName! 👋',
+                  'Hi, $userName! 👋',
                   style: Theme.of(context).textTheme.headlineMedium,
                   textAlign: TextAlign.center,
                 )
@@ -369,7 +394,7 @@ class _EmptyAIChat extends StatelessWidget {
                 .slideY(begin: 0.2, end: 0, delay: 200.ms),
             const SizedBox(height: 12),
             Text(
-                  'Я твой ИИ-помощник. Можешь спрашивать у меня всё что тебе нужно!',
+                  'I am your AI-friend. You can ask me anything you need!',
                   style: Theme.of(
                     context,
                   ).textTheme.bodyMedium?.copyWith(color: AppColors.textGrey),
@@ -422,7 +447,7 @@ class _AIMessageInput extends StatelessWidget {
                 child: TextField(
                   controller: controller,
                   decoration: const InputDecoration(
-                    hintText: 'Спросите что-нибудь...',
+                    hintText: 'Tell me about...',
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.symmetric(vertical: 12),
                   ),

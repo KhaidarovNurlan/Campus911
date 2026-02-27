@@ -5,7 +5,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 
 import '../theme/colors.dart';
-import '../core/constants.dart';
+import '../theme/constants.dart';
 import '../theme/custom_button.dart';
 import '../theme/custom_text_field.dart';
 import '../data/models.dart';
@@ -42,11 +42,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.go('/home'),
         ),
-        title: const Text('Календарь'),
+        title: const Text('Calendar'),
         actions: [
           IconButton(
             icon: const Icon(Icons.today_rounded),
-            tooltip: 'Сегодня',
+            tooltip: 'Today',
             onPressed: () {
               setState(() {
                 _focusedDay = DateTime.now();
@@ -56,22 +56,22 @@ class _CalendarScreenState extends State<CalendarScreen> {
           ),
           PopupMenuButton<CalendarFormat>(
             icon: const Icon(Icons.view_module_rounded),
-            tooltip: 'Вид',
+            tooltip: 'View',
             onSelected: (format) {
               setState(() => _calendarFormat = format);
             },
             itemBuilder: (context) => [
               const PopupMenuItem(
                 value: CalendarFormat.month,
-                child: Text('Месяц'),
+                child: Text('Month'),
               ),
               const PopupMenuItem(
                 value: CalendarFormat.twoWeeks,
-                child: Text('2 недели'),
+                child: Text('Half a month'),
               ),
               const PopupMenuItem(
                 value: CalendarFormat.week,
-                child: Text('Неделя'),
+                child: Text('Week'),
               ),
             ],
           ),
@@ -113,7 +113,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddEventDialog(context),
         icon: const Icon(Icons.add_rounded),
-        label: const Text('Добавить'),
+        label: const Text('Add'),
       ),
     );
   }
@@ -162,7 +162,7 @@ class _CustomCalendar extends StatelessWidget {
         selectedDayPredicate: (day) => isSameDay(selectedDay, day),
         calendarFormat: calendarFormat,
         startingDayOfWeek: StartingDayOfWeek.monday,
-        locale: 'ru_RU',
+        locale: 'en_US',
 
         calendarStyle: CalendarStyle(
           todayDecoration: BoxDecoration(
@@ -249,7 +249,7 @@ class _EventsList extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.all(16),
           child: Text(
-            DateFormat('d MMMM yyyy', 'ru_RU').format(selectedDate),
+            DateFormat('d MMMM yyyy', 'en_US').format(selectedDate),
             style: Theme.of(context).textTheme.headlineSmall,
           ),
         ),
@@ -408,12 +408,12 @@ class _EventCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Удалить событие?'),
-        content: Text('Вы уверены, что хотите удалить "${event.title}"?'),
+        title: const Text('Delete event?'),
+        content: Text('Are you sure you want to delete "${event.title}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Отмена'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () {
@@ -421,14 +421,14 @@ class _EventCard extends StatelessWidget {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('🗑️ ${event.title} удалён'),
+                  content: Text('🗑️ ${event.title} deleted'),
                   backgroundColor: AppColors.error,
                   behavior: SnackBarBehavior.floating,
                 ),
               );
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Удалить'),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -456,14 +456,14 @@ class _EmptyEvents extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'Нет событий',
+              'No events',
               style: Theme.of(
                 context,
               ).textTheme.bodyLarge?.copyWith(color: AppColors.textGrey),
             ),
             const SizedBox(height: 8),
             Text(
-              DateFormat('d MMMM yyyy', 'ru_RU').format(selectedDate),
+              DateFormat('d MMMM yyyy', 'en_US').format(selectedDate),
               style: Theme.of(
                 context,
               ).textTheme.bodySmall?.copyWith(color: AppColors.textGrey),
@@ -534,13 +534,13 @@ class _EventDetailsSheet extends StatelessWidget {
 
           _InfoRow(
             icon: Icons.calendar_today_rounded,
-            label: 'Дата',
-            value: DateFormat('d MMMM yyyy', 'ru_RU').format(event.date),
+            label: 'Date',
+            value: DateFormat('d MMMM yyyy', 'en_US').format(event.date),
           ),
           const SizedBox(height: 12),
           _InfoRow(
             icon: Icons.access_time_rounded,
-            label: 'Время',
+            label: 'Time',
             value: DateFormat('HH:mm').format(event.date),
           ),
 
@@ -548,7 +548,7 @@ class _EventDetailsSheet extends StatelessWidget {
             const SizedBox(height: 12),
             _InfoRow(
               icon: Icons.description_rounded,
-              label: 'Описание',
+              label: 'Description',
               value: event.description!,
             ),
           ],
@@ -558,8 +558,8 @@ class _EventDetailsSheet extends StatelessWidget {
             icon: event.hasReminder
                 ? Icons.notifications_active_rounded
                 : Icons.notifications_off_rounded,
-            label: 'Напоминание',
-            value: event.hasReminder ? 'Включено' : 'Выключено',
+            label: 'Reminder',
+            value: event.hasReminder ? 'On' : 'Off',
           ),
         ],
       ),
@@ -569,15 +569,15 @@ class _EventDetailsSheet extends StatelessWidget {
   String _getTypeName(String type) {
     switch (type) {
       case 'academic':
-        return 'Учебное';
+        return 'Academic';
       case 'deadline':
-        return 'Дедлайн';
+        return 'Deadline';
       case 'personal':
-        return 'Личное';
+        return 'Personal';
       case 'news':
-        return 'Новость';
+        return 'News';
       default:
-        return 'Событие';
+        return 'Event';
     }
   }
 }
@@ -689,13 +689,13 @@ class _AddEventBottomSheetState extends State<_AddEventBottomSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Добавить событие',
+                          'Add event',
                           style: Theme.of(context).textTheme.headlineSmall,
                         ),
                         Text(
                           DateFormat(
                             'd MMMM yyyy',
-                            'ru_RU',
+                            'en_US',
                           ).format(widget.selectedDate),
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: AppColors.textGrey),
@@ -712,13 +712,13 @@ class _AddEventBottomSheetState extends State<_AddEventBottomSheet> {
               const SizedBox(height: 24),
 
               CustomTextField(
-                label: 'Название',
-                hint: 'Экзамен по математике',
+                label: 'Name',
+                hint: '...',
                 controller: _titleController,
                 prefixIcon: const Icon(Icons.title_rounded),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Введите название события';
+                    return 'Enter event name';
                   }
                   return null;
                 },
@@ -726,8 +726,8 @@ class _AddEventBottomSheetState extends State<_AddEventBottomSheet> {
               const SizedBox(height: 16),
 
               CustomTextField(
-                label: 'Описание (опционально)',
-                hint: 'Дополнительная информация',
+                label: 'Description (optional)',
+                hint: '...',
                 controller: _descriptionController,
                 maxLines: 3,
                 prefixIcon: const Icon(Icons.description_rounded),
@@ -735,7 +735,7 @@ class _AddEventBottomSheetState extends State<_AddEventBottomSheet> {
               const SizedBox(height: 16),
 
               Text(
-                'Тип события',
+                'Event type',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: isDark ? AppColors.textLight : AppColors.textDark,
@@ -783,7 +783,7 @@ class _AddEventBottomSheetState extends State<_AddEventBottomSheet> {
               const SizedBox(height: 16),
 
               _TimeSelector(
-                label: 'Время',
+                label: 'Time',
                 time: _selectedTime,
                 onTimeSelected: (time) => setState(() => _selectedTime = time),
               ),
@@ -792,9 +792,9 @@ class _AddEventBottomSheetState extends State<_AddEventBottomSheet> {
               SwitchListTile(
                 value: _hasReminder,
                 onChanged: (value) => setState(() => _hasReminder = value),
-                title: const Text('Напоминание'),
+                title: const Text('Reminder'),
                 subtitle: Text(
-                  _hasReminder ? 'За 1 час до события' : 'Выключено',
+                  _hasReminder ? '1 hour before the event' : 'Off',
                   style: Theme.of(
                     context,
                   ).textTheme.bodySmall?.copyWith(color: AppColors.textGrey),
@@ -805,7 +805,7 @@ class _AddEventBottomSheetState extends State<_AddEventBottomSheet> {
               const SizedBox(height: 24),
 
               CustomButton(
-                text: 'Добавить',
+                text: 'Add',
                 onPressed: _saveEvent,
                 icon: Icons.check_rounded,
               ),
@@ -844,7 +844,7 @@ class _AddEventBottomSheetState extends State<_AddEventBottomSheet> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('✅ ${event.title} добавлен в календарь'),
+        content: Text('✅ ${event.title} added to calendar'),
         backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
       ),

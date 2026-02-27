@@ -33,10 +33,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (userModel != null) {
         userProvider.setUser(userModel);
       } else {
-        setState(() => _error = 'Пользователь не найден в базе данных.');
+        setState(() => _error = 'The user was not found in the database.');
       }
     } catch (e) {
-      setState(() => _error = 'Ошибка при загрузке профиля: $e');
+      setState(() => _error = 'Error loading profile: $e');
     }
 
     setState(() => _isLoading = false);
@@ -54,15 +54,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (_error != null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Профиль')),
+        appBar: AppBar(title: const Text('Profile')),
         body: Center(child: Text(_error!)),
       );
     }
 
     if (user == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Профиль')),
-        body: const Center(child: Text('Нет данных пользователя')),
+        appBar: AppBar(title: const Text('Profile')),
+        body: const Center(child: Text('No user data')),
       );
     }
 
@@ -72,7 +72,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.go('/home'),
         ),
-        title: const Text('Профиль'),
+        title: const Text('Profile'),
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -135,7 +135,7 @@ class _ProfileHeader extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                user.name.split(' ').first[0] + user.name.split(' ').last[0],
+                user.name.split(' ').first[0] + user.name.split(' ')[1][0],
                 style: const TextStyle(
                   color: AppColors.primary,
                   fontSize: 40,
@@ -173,7 +173,7 @@ class _ProfileHeader extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  user.isHeadman ? 'Староста' : 'Студент',
+                  user.isHeadman ? 'Headman' : 'Student',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 14,
@@ -216,7 +216,7 @@ class _ProfileInfo extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Личная информация',
+            'Personal info',
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 16),
@@ -228,13 +228,13 @@ class _ProfileInfo extends StatelessWidget {
           const Divider(height: 24),
           _InfoRow(
             icon: Icons.school_rounded,
-            label: 'Колледж',
+            label: 'College',
             value: user.college,
           ),
           const Divider(height: 24),
           _InfoRow(
             icon: Icons.people_alt_rounded,
-            label: 'Группа',
+            label: 'Group',
             value: user.groupName,
           ),
         ],
@@ -322,14 +322,14 @@ class _SettingsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Настройки', style: Theme.of(context).textTheme.headlineSmall),
+          Text('Settings', style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 16),
           SwitchListTile(
             value: isDarkMode,
             onChanged: (value) => onThemeToggle(),
-            title: const Text('Тёмная тема'),
+            title: const Text('Dark theme'),
             subtitle: Text(
-              isDarkMode ? 'Включена' : 'Выключена',
+              isDarkMode ? 'On' : 'Off',
               style: Theme.of(
                 context,
               ).textTheme.bodySmall?.copyWith(color: AppColors.textGrey),
@@ -376,7 +376,7 @@ class _ActionsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Прочее', style: Theme.of(context).textTheme.headlineSmall),
+          Text('Other', style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 16),
           ListTile(
             leading: Container(
@@ -390,16 +390,10 @@ class _ActionsSection extends StatelessWidget {
                 color: AppColors.info,
               ),
             ),
-            title: const Text('Служба поддержки'),
+            title: const Text('Support'),
             trailing: const Icon(Icons.chevron_right_rounded),
             contentPadding: EdgeInsets.zero,
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('📧 Пишите нам: nurlankh888@gmail.com'),
-                ),
-              );
-            },
+            onTap: () => _showSupportDialog(context),
           ),
           const Divider(height: 24),
           ListTile(
@@ -414,7 +408,7 @@ class _ActionsSection extends StatelessWidget {
                 color: AppColors.secondary,
               ),
             ),
-            title: const Text('О приложении'),
+            title: const Text('About the app'),
             trailing: const Icon(Icons.chevron_right_rounded),
             contentPadding: EdgeInsets.zero,
             onTap: () => _showAboutDialog(context),
@@ -429,9 +423,42 @@ class _ActionsSection extends StatelessWidget {
               ),
               child: const Icon(Icons.logout_rounded, color: AppColors.error),
             ),
-            title: const Text('Выйти'),
+            title: const Text('Log out'),
             contentPadding: EdgeInsets.zero,
             onTap: () => _showLogoutDialog(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSupportDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Campus911',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            const Text('Our contacts'),
+            const SizedBox(height: 16),
+            Text(
+              'E-mail: nurlankh888@gmail.com',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.textGrey),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
           ),
         ],
       ),
@@ -451,10 +478,10 @@ class _ActionsSection extends StatelessWidget {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            const Text('Версия 2-ой семестр'),
+            const Text('Version: 2nd semester'),
             const SizedBox(height: 16),
             Text(
-              'Мобильное приложение для студентов с расписанием, новостями, чатами и AI-помощником.',
+              'A mobile app for students with a schedule, news, chats, and an AI-friend.',
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(color: AppColors.textGrey),
@@ -464,7 +491,7 @@ class _ActionsSection extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Закрыть'),
+            child: const Text('Close'),
           ),
         ],
       ),
@@ -475,12 +502,12 @@ class _ActionsSection extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Выйти из аккаунта?'),
-        content: const Text('Вы уверены, что хотите выйти?'),
+        title: const Text('Log out of your account?'),
+        content: const Text('Are you sure you want to log out?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Отмена'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -497,11 +524,11 @@ class _ActionsSection extends StatelessWidget {
               } catch (e) {
                 ScaffoldMessenger.of(
                   context,
-                ).showSnackBar(SnackBar(content: Text('Ошибка выхода: $e')));
+                ).showSnackBar(SnackBar(content: Text('Account logout error: $e')));
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Выйти'),
+            child: const Text('Log out'),
           ),
         ],
       ),

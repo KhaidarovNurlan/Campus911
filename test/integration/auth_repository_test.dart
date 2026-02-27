@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
-import 'package:campus911/repositories/auth_repository.dart';
+import 'package:campus911/utils/auth_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

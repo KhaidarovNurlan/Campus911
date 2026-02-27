@@ -16,7 +16,7 @@ import 'pages/auth.dart';
 import 'pages/login.dart';
 import 'pages/home.dart';
 import 'pages/schedule.dart';
-import 'pages/ai_helper.dart';
+import 'pages/ai_friend.dart';
 import 'pages/calendar.dart';
 import 'pages/expenses.dart';
 import 'pages/reviews.dart';
@@ -28,7 +28,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await initializeDateFormatting('ru_RU', null);
+  await initializeDateFormatting('en_US', null);
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,

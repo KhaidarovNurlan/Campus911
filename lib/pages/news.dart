@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
 import '../theme/colors.dart';
-import '../core/constants.dart';
+import '../theme/constants.dart';
 import '../theme/custom_button.dart';
 import '../theme/custom_text_field.dart';
 import '../data/models.dart';
@@ -53,11 +53,11 @@ class _NewsScreenState extends State<NewsScreen> {
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.go('/home'),
         ),
-        title: const Text('Новости'),
+        title: const Text('News'),
         actions: [
           PopupMenuButton<String>(
             icon: const Icon(Icons.filter_list_rounded),
-            tooltip: 'Фильтр',
+            tooltip: 'Filter',
             onSelected: (category) {
               newsProvider.setCategory(category == 'all' ? null : category);
             },
@@ -68,7 +68,7 @@ class _NewsScreenState extends State<NewsScreen> {
                   children: [
                     Icon(Icons.clear_all_rounded),
                     SizedBox(width: 12),
-                    Text('Все'),
+                    Text('All'),
                   ],
                 ),
               ),
@@ -102,7 +102,7 @@ class _NewsScreenState extends State<NewsScreen> {
           ? FloatingActionButton.extended(
               onPressed: () => _showAddNewsDialog(context),
               icon: const Icon(Icons.add_rounded),
-              label: const Text('Добавить'),
+              label: const Text('Add'),
             )
           : null,
     );
@@ -147,31 +147,6 @@ class _NewsCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (news.imageUrl == null)
-                Container(
-                  height: 180,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        _getCategoryColor(news.category),
-                        _getCategoryColor(news.category).withValues(alpha: 0.7),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      topRight: Radius.circular(20),
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      news.categoryEmoji,
-                      style: const TextStyle(fontSize: 80),
-                    ),
-                  ),
-                ),
-
               Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
@@ -247,7 +222,7 @@ class _NewsCard extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          'Читать далее',
+                          'Read more',
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(
                                 color: AppColors.primary,
@@ -274,13 +249,11 @@ class _NewsCard extends StatelessWidget {
 
   Color _getCategoryColor(String category) {
     switch (category) {
-      case 'academic':
-        return AppColors.primary;
       case 'events':
         return AppColors.info;
-      case 'achievements':
-        return AppColors.warning;
-      case 'announcements':
+      case 'academic':
+        return AppColors.primary;
+      case 'sporting':
         return AppColors.error;
       default:
         return AppColors.textGrey;
@@ -292,13 +265,13 @@ class _NewsCard extends StatelessWidget {
     final difference = now.difference(date);
 
     if (difference.inDays == 0) {
-      return 'Сегодня';
+      return 'Today';
     } else if (difference.inDays == 1) {
-      return 'Вчера';
+      return 'Yesterday';
     } else if (difference.inDays < 7) {
-      return '${difference.inDays} дн. назад';
+      return '${difference.inDays} days ago';
     } else {
-      return DateFormat('d MMM', 'ru_RU').format(date);
+      return DateFormat('d MMM', 'en_US').format(date);
     }
   }
 
@@ -401,7 +374,7 @@ class _NewsDetailsSheet extends StatelessWidget {
                           Text(
                             DateFormat(
                               'd MMMM yyyy, HH:mm',
-                              'ru_RU',
+                              'en_US',
                             ).format(news.date),
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(color: AppColors.textGrey),
@@ -429,13 +402,11 @@ class _NewsDetailsSheet extends StatelessWidget {
 
   Color _getCategoryColor(String category) {
     switch (category) {
-      case 'academic':
-        return AppColors.primary;
       case 'events':
         return AppColors.info;
-      case 'achievements':
-        return AppColors.warning;
-      case 'announcements':
+      case 'academic':
+        return AppColors.primary;
+      case 'sporting':
         return AppColors.error;
       default:
         return AppColors.textGrey;
@@ -469,26 +440,9 @@ class _EmptyNews extends StatelessWidget {
               ).textTheme.bodyLarge?.copyWith(color: AppColors.textGrey),
               textAlign: TextAlign.center,
             ),
-            if (isHeadman) ...[
-              const SizedBox(height: 24),
-              CustomButton(
-                text: 'Добавить новость',
-                onPressed: () => _showAddNewsDialog(context),
-                icon: Icons.add_rounded,
-              ),
-            ],
           ],
         ),
       ),
-    );
-  }
-
-  void _showAddNewsDialog(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => const _AddNewsBottomSheet(),
     );
   }
 }
@@ -551,7 +505,7 @@ class _AddNewsBottomSheetState extends State<_AddNewsBottomSheet> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Добавить новость',
+                      'Add news',
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                   ),
@@ -564,13 +518,13 @@ class _AddNewsBottomSheetState extends State<_AddNewsBottomSheet> {
               const SizedBox(height: 24),
 
               CustomTextField(
-                label: 'Заголовок',
-                hint: 'День открытых дверей',
+                label: 'Title',
+                hint: '...',
                 controller: _titleController,
                 prefixIcon: const Icon(Icons.title_rounded),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Введите заголовок';
+                    return 'Enter title';
                   }
                   return null;
                 },
@@ -578,25 +532,16 @@ class _AddNewsBottomSheetState extends State<_AddNewsBottomSheet> {
               const SizedBox(height: 16),
 
               CustomTextField(
-                label: 'Текст новости',
-                hint: 'Расскажите подробнее...',
+                label: 'Description (optional)',
+                hint: '...',
                 controller: _contentController,
                 maxLines: 5,
                 prefixIcon: const Icon(Icons.article_rounded),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Введите текст новости';
-                  }
-                  if (value.length < 20) {
-                    return 'Минимум 20 символов';
-                  }
-                  return null;
-                },
               ),
               const SizedBox(height: 16),
 
               Text(
-                'Категория',
+                'Category',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: isDark ? AppColors.textLight : AppColors.textDark,
@@ -644,7 +589,7 @@ class _AddNewsBottomSheetState extends State<_AddNewsBottomSheet> {
               const SizedBox(height: 24),
 
               CustomButton(
-                text: 'Опубликовать',
+                text: 'Publish',
                 onPressed: () => _publishNews(userProvider),
                 icon: Icons.publish_rounded,
               ),
@@ -673,7 +618,7 @@ class _AddNewsBottomSheetState extends State<_AddNewsBottomSheet> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('✅ Новость успешно опубликована'),
+        content: Text('✅ News successfully published'),
         backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
       ),

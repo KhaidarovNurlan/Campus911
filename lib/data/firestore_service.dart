@@ -121,6 +121,17 @@ class FirestoreService {
     });
   }
 
+  Future<void> updateLesson(LessonModel lesson) async {
+    await _db.collection('schedule').doc(lesson.id).update({
+      'subject': lesson.subject,
+      'teacher': lesson.teacher,
+      'room': lesson.room,
+      'startTime': lesson.startTime.toIso8601String(),
+      'endTime': lesson.endTime.toIso8601String(),
+      'type': lesson.type,
+    });
+  }
+
   Future<void> deleteLesson(String id) async {
     await _db.collection('schedule').doc(id).delete();
   }
@@ -159,7 +170,7 @@ class FirestoreService {
           .map((doc) => EventModel.fromMap(doc.data(), doc.id))
           .toList();
     } catch (e) {
-      debugPrint('Ошибка загрузки событий: $e');
+      debugPrint('Error loading events: $e');
       return [];
     }
   }
@@ -168,7 +179,7 @@ class FirestoreService {
     try {
       await _db.collection('events').doc(event.id).set(event.toMap());
     } catch (e) {
-      debugPrint('Ошибка добавления события: $e');
+      debugPrint('Error adding event: $e');
     }
   }
 
@@ -176,7 +187,7 @@ class FirestoreService {
     try {
       await _db.collection('events').doc(id).delete();
     } catch (e) {
-      debugPrint('Ошибка удаления события: $e');
+      debugPrint('Event deletion event: $e');
     }
   }
 
@@ -188,5 +199,37 @@ class FirestoreService {
         .get();
 
     return snapshot.docs.map((doc) => doc.id).toList();
+  }
+
+  Future<List<MessageModel>> getMessages(String userId) async {
+    final snapshot = await _db
+        .collection('users')
+        .doc(userId)
+        .collection('ai_chats')
+        .orderBy('timestamp')
+        .get();
+
+    return snapshot.docs
+        .map((doc) => MessageModel.fromMap(doc.id, doc.data()))
+        .toList();
+  }
+
+  Future<void> saveMessage(String userId, MessageModel message) async {
+    await _db
+        .collection('users')
+        .doc(userId)
+        .collection('ai_chats')
+        .doc(message.id)
+        .set(message.toMap());
+  }
+
+  Future<void> clearChatHistory(String userId) async {
+    final ref = _db.collection('users').doc(userId).collection('ai_chats');
+    final snapshot = await ref.get();
+    final batch = _db.batch();
+    for (var doc in snapshot.docs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
   }
 }

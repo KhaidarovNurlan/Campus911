@@ -4,12 +4,11 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
 import '../theme/colors.dart';
-import '../core/constants.dart';
+import '../theme/constants.dart';
 import '../theme/custom_button.dart';
 import '../theme/custom_text_field.dart';
 import '../data/models.dart';
 import '../data/providers.dart';
-import '../data/firestore_service.dart';
 
 class ScheduleScreen extends StatefulWidget {
   const ScheduleScreen({super.key});
@@ -37,26 +36,18 @@ class _ScheduleScreenState extends State<ScheduleScreen>
         );
       }
     });
-
-    _loadLessons();
+    _initData();
   }
 
-  Future<void> _loadLessons() async {
-    final firestore = FirestoreService();
-    final userProvider = context.read<UserProvider>();
-
-    final lessons = await firestore.getLessons(
-      userProvider.college,
-      userProvider.groupName
-    );
-
-    if (!mounted) return;
-    final provider = context.read<ScheduleProvider>();
-
-    provider.clearLessons();
-    for (var lesson in lessons) {
-      provider.addLesson(lesson);
-    }
+  Future<void> _initData() async {
+    await Future.microtask(() {
+      if (!mounted) return;
+      final userProvider = context.read<UserProvider>();
+      context.read<ScheduleProvider>().loadSchedule(
+        userProvider.college,
+        userProvider.groupName,
+      );
+    });
   }
 
   @override
@@ -77,7 +68,7 @@ class _ScheduleScreenState extends State<ScheduleScreen>
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.go('/home'),
         ),
-        title: const Text('Расписание'),
+        title: const Text('Schedule'),
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
@@ -88,14 +79,6 @@ class _ScheduleScreenState extends State<ScheduleScreen>
             return Tab(text: day.substring(0, 2));
           }).toList(),
         ),
-        actions: [
-          if (isHeadman)
-            IconButton(
-              icon: const Icon(Icons.add_rounded),
-              tooltip: 'Добавить занятие',
-              onPressed: () => _showAddLessonDialog(context),
-            ),
-        ],
       ),
       body: PageView.builder(
         controller: _pageController,
@@ -111,6 +94,13 @@ class _ScheduleScreenState extends State<ScheduleScreen>
           );
         },
       ),
+      floatingActionButton: isHeadman
+          ? FloatingActionButton.extended(
+              onPressed: () => _showAddLessonDialog(context),
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Add'),
+            )
+          : null,
     );
   }
 
@@ -272,7 +262,7 @@ class _LessonCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       _LessonInfo(
                         icon: Icons.room_rounded,
-                        text: 'Каб. ${lesson.room}',
+                        text: 'Room ${lesson.room}',
                       ),
                     ],
                   ),
@@ -290,8 +280,6 @@ class _LessonCard extends StatelessWidget {
       case 'lecture':
         return AppColors.primary;
       case 'practice':
-        return AppColors.secondary;
-      case 'lab':
         return AppColors.info;
       default:
         return AppColors.textGrey;
@@ -355,40 +343,27 @@ class _EmptySchedule extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'Расписание на $day\nпока не добавлено',
+              'Schedule for $day\nhas not been added yet',
               style: Theme.of(
                 context,
               ).textTheme.bodyLarge?.copyWith(color: AppColors.textGrey),
               textAlign: TextAlign.center,
             ),
-            if (isHeadman) ...[
-              const SizedBox(height: 24),
-              CustomButton(
-                text: 'Добавить занятие',
-                onPressed: () => _showAddLessonDialog(context, day),
-                icon: Icons.add_rounded,
-              ),
-            ],
           ],
         ),
       ),
-    );
-  }
-
-  void _showAddLessonDialog(BuildContext context, String day) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _AddLessonBottomSheet(selectedDay: day),
     );
   }
 }
 
 class _AddLessonBottomSheet extends StatefulWidget {
   final String selectedDay;
+  final LessonModel? lessonToEdit;
 
-  const _AddLessonBottomSheet({required this.selectedDay});
+  const _AddLessonBottomSheet({
+    required this.selectedDay,
+    this.lessonToEdit,
+  });
 
   @override
   State<_AddLessonBottomSheet> createState() => _AddLessonBottomSheetState();
@@ -396,13 +371,31 @@ class _AddLessonBottomSheet extends StatefulWidget {
 
 class _AddLessonBottomSheetState extends State<_AddLessonBottomSheet> {
   final _formKey = GlobalKey<FormState>();
-  final _subjectController = TextEditingController();
-  final _teacherController = TextEditingController();
-  final _roomController = TextEditingController();
+  late TextEditingController _subjectController;
+  late TextEditingController _teacherController;
+  late TextEditingController _roomController;
 
   String _selectedType = 'lecture';
-  TimeOfDay _startTime = const TimeOfDay(hour: 10, minute: 0);
-  TimeOfDay _endTime = const TimeOfDay(hour: 11, minute: 30);
+  late TimeOfDay _startTime;
+  late TimeOfDay _endTime;
+
+  @override
+  void initState() {
+    super.initState();
+    _subjectController = TextEditingController(text: widget.lessonToEdit?.subject ?? '');
+    _teacherController = TextEditingController(text: widget.lessonToEdit?.teacher ?? '');
+    _roomController = TextEditingController(text: widget.lessonToEdit?.room ?? '');
+
+    _selectedType = widget.lessonToEdit?.type ?? 'lecture';
+
+    if (widget.lessonToEdit != null) {
+      _startTime = TimeOfDay.fromDateTime(widget.lessonToEdit!.startTime);
+      _endTime = TimeOfDay.fromDateTime(widget.lessonToEdit!.endTime);
+    } else {
+      _startTime = const TimeOfDay(hour: 10, minute: 0);
+      _endTime = const TimeOfDay(hour: 11, minute: 30);
+    }
+  }
 
   @override
   void dispose() {
@@ -415,6 +408,7 @@ class _AddLessonBottomSheetState extends State<_AddLessonBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isEditing = widget.lessonToEdit != null;
 
     return Container(
       decoration: BoxDecoration(
@@ -434,6 +428,9 @@ class _AddLessonBottomSheetState extends State<_AddLessonBottomSheet> {
             children: [
               Row(
                 children: [
+                  Icon(isEditing ? Icons.edit_rounded : Icons.add_rounded, color: AppColors.primary),
+                  const SizedBox(width: 12),
+                  Text(isEditing ? 'Edit lesson' : 'Add a lesson', style: Theme.of(context).textTheme.headlineSmall),
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -451,7 +448,7 @@ class _AddLessonBottomSheetState extends State<_AddLessonBottomSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Добавить занятие',
+                          'Add a lesson',
                           style: Theme.of(context).textTheme.headlineSmall,
                         ),
                         Text(
@@ -471,13 +468,13 @@ class _AddLessonBottomSheetState extends State<_AddLessonBottomSheet> {
               const SizedBox(height: 24),
 
               CustomTextField(
-                label: 'Предмет',
-                hint: 'Математика',
+                label: 'Subject',
+                hint: '...',
                 controller: _subjectController,
                 prefixIcon: const Icon(Icons.book_rounded),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Введите название предмета';
+                    return 'Enter the name of the subject';
                   }
                   return null;
                 },
@@ -485,13 +482,13 @@ class _AddLessonBottomSheetState extends State<_AddLessonBottomSheet> {
               const SizedBox(height: 16),
 
               CustomTextField(
-                label: 'Преподаватель',
-                hint: 'Иванов И.И.',
+                label: 'Teacher',
+                hint: '...',
                 controller: _teacherController,
                 prefixIcon: const Icon(Icons.person_rounded),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Введите ФИО преподавателя';
+                    return "Enter the teacher's full name";
                   }
                   return null;
                 },
@@ -499,13 +496,13 @@ class _AddLessonBottomSheetState extends State<_AddLessonBottomSheet> {
               const SizedBox(height: 16),
 
               CustomTextField(
-                label: 'Кабинет',
-                hint: '305',
+                label: 'Room',
+                hint: '...',
                 controller: _roomController,
                 prefixIcon: const Icon(Icons.room_rounded),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Введите номер кабинета';
+                    return 'Enter the room number';
                   }
                   return null;
                 },
@@ -513,7 +510,7 @@ class _AddLessonBottomSheetState extends State<_AddLessonBottomSheet> {
               const SizedBox(height: 16),
 
               Text(
-                'Тип занятия',
+                'Lesson type',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: isDark ? AppColors.textLight : AppColors.textDark,
@@ -524,22 +521,15 @@ class _AddLessonBottomSheetState extends State<_AddLessonBottomSheet> {
                 spacing: 8,
                 children: [
                   _TypeChip(
-                    label: 'Лекция',
+                    label: 'Lecture',
                     value: 'lecture',
                     groupValue: _selectedType,
                     onSelected: (value) =>
                         setState(() => _selectedType = value),
                   ),
                   _TypeChip(
-                    label: 'Практика',
+                    label: 'Practice',
                     value: 'practice',
-                    groupValue: _selectedType,
-                    onSelected: (value) =>
-                        setState(() => _selectedType = value),
-                  ),
-                  _TypeChip(
-                    label: 'Лабораторная',
-                    value: 'lab',
                     groupValue: _selectedType,
                     onSelected: (value) =>
                         setState(() => _selectedType = value),
@@ -552,7 +542,7 @@ class _AddLessonBottomSheetState extends State<_AddLessonBottomSheet> {
                 children: [
                   Expanded(
                     child: _TimeSelector(
-                      label: 'Начало',
+                      label: 'Start',
                       time: _startTime,
                       onTimeSelected: (time) =>
                           setState(() => _startTime = time),
@@ -561,17 +551,17 @@ class _AddLessonBottomSheetState extends State<_AddLessonBottomSheet> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: _TimeSelector(
-                      label: 'Конец',
+                      label: 'End',
                       time: _endTime,
                       onTimeSelected: (time) => setState(() => _endTime = time),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
 
+              const SizedBox(height: 24),
               CustomButton(
-                text: 'Добавить',
+                text: isEditing ? 'Save Changes' : 'Add',
                 onPressed: _saveLesson,
                 icon: Icons.check_rounded,
               ),
@@ -602,7 +592,7 @@ class _AddLessonBottomSheetState extends State<_AddLessonBottomSheet> {
     );
 
     final lesson = LessonModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: widget.lessonToEdit?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
       subject: _subjectController.text,
       teacher: _teacherController.text,
       room: _roomController.text,
@@ -614,17 +604,20 @@ class _AddLessonBottomSheetState extends State<_AddLessonBottomSheet> {
       groupName: userProvider.groupName,
     );
 
-    context.read<ScheduleProvider>().addLesson(lesson);
+    final provider = context.read<ScheduleProvider>();
 
-    final firestore = FirestoreService();
-    await firestore.addLesson(lesson);
+    if (widget.lessonToEdit != null) {
+      provider.updateLesson(lesson);
+    } else {
+      provider.addLesson(lesson);
+    }
 
     if (!mounted) return;
     Navigator.pop(context);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('✅ ${lesson.subject} добавлен в расписание'),
+        content: Text(widget.lessonToEdit != null ? '✅ ${lesson.subject} updated' : '✅ ${lesson.subject} added'),
         backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
       ),
@@ -780,12 +773,28 @@ class _LessonOptionsSheet extends StatelessWidget {
             leading: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.edit_rounded, color: AppColors.info),
+            ),
+            title: const Text('Edit'),
+            onTap: () {
+              Navigator.pop(context);
+              _showEditLessonDialog(context);
+            },
+          ),
+
+          ListTile(
+            leading: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
                 color: AppColors.error.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(Icons.delete_rounded, color: AppColors.error),
             ),
-            title: const Text('Удалить'),
+            title: const Text('Delete'),
             onTap: () {
               Navigator.pop(context);
               _showDeleteConfirmation(context);
@@ -796,36 +805,45 @@ class _LessonOptionsSheet extends StatelessWidget {
     );
   }
 
+  void _showEditLessonDialog(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _AddLessonBottomSheet(
+        selectedDay: lesson.dayOfWeek,
+        lessonToEdit: lesson,
+      ),
+    );
+  }
+
   void _showDeleteConfirmation(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Удалить занятие?'),
-        content: Text('Вы уверены, что хотите удалить "${lesson.subject}"?'),
+        title: const Text('Delete lesson?'),
+        content: Text('Are you sure you want to delete "${lesson.subject}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Отмена'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () async {
               context.read<ScheduleProvider>().deleteLesson(lesson.id);
 
-              final firestore = FirestoreService();
-              await firestore.deleteLesson(lesson.id);
-
               if (!context.mounted) return;
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('🗑️ ${lesson.subject} удалён'),
+                  content: Text('🗑️ ${lesson.subject} deleted'),
                   backgroundColor: AppColors.error,
                   behavior: SnackBarBehavior.floating,
                 ),
               );
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Удалить'),
+            child: const Text('Delete'),
           ),
         ],
       ),

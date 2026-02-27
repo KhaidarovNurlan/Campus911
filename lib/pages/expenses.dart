@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 import '../theme/colors.dart';
-import '../core/constants.dart';
+import '../theme/constants.dart';
 import '../theme/custom_button.dart';
 import '../theme/custom_text_field.dart';
 import '../data/models.dart';
@@ -50,24 +50,17 @@ class _ExpensesScreenState extends State<ExpensesScreen>
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.go('/home'),
         ),
-        title: const Text('Трекер расходов'),
+        title: const Text('Expense tracker'),
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: AppColors.primary,
           labelColor: AppColors.primary,
           unselectedLabelColor: AppColors.textGrey,
           tabs: const [
-            Tab(text: 'Статистика'),
-            Tab(text: 'История'),
+            Tab(text: 'Statistics'),
+            Tab(text: 'History'),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list_rounded),
-            tooltip: 'Фильтр',
-            onPressed: () => _showFilterOptions(context),
-          ),
-        ],
       ),
       body: TabBarView(
         controller: _tabController,
@@ -76,7 +69,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddExpenseDialog(context),
         icon: const Icon(Icons.add_rounded),
-        label: const Text('Добавить'),
+        label: const Text('Add'),
       ),
     );
   }
@@ -87,14 +80,6 @@ class _ExpensesScreenState extends State<ExpensesScreen>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => const _AddExpenseBottomSheet(),
-    );
-  }
-
-  void _showFilterOptions(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _FilterOptionsSheet(),
     );
   }
 }
@@ -122,7 +107,7 @@ class _StatisticsTab extends StatelessWidget {
           const SizedBox(height: 24),
 
           Text(
-            'Расходы по категориям',
+            'Expenses by category',
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 16),
@@ -130,7 +115,7 @@ class _StatisticsTab extends StatelessWidget {
           const SizedBox(height: 24),
 
           Text(
-            'Топ-3 категории',
+            'Top 3 categories',
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 16),
@@ -138,7 +123,7 @@ class _StatisticsTab extends StatelessWidget {
           const SizedBox(height: 24),
 
           Text(
-            'График расходов',
+            'Expense schedule',
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 16),
@@ -180,7 +165,7 @@ class _TotalAmountCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'Всего потрачено',
+                'Total invested',
                 style: TextStyle(color: Colors.white70, fontSize: 16),
               ),
               Container(
@@ -224,7 +209,7 @@ class _TotalAmountCard extends StatelessWidget {
                     ),
                     SizedBox(width: 4),
                     Text(
-                      'Октябрь 2024',
+                      '',
                       style: TextStyle(color: Colors.white, fontSize: 12),
                     ),
                   ],
@@ -637,7 +622,7 @@ class _HistoryTab extends StatelessWidget {
 
     final Map<String, List<ExpenseModel>> groupedExpenses = {};
     for (var expense in expenses) {
-      final dateKey = DateFormat('d MMMM yyyy', 'ru_RU').format(expense.date);
+      final dateKey = DateFormat('d MMMM yyyy', 'en_US').format(expense.date);
       if (!groupedExpenses.containsKey(dateKey)) {
         groupedExpenses[dateKey] = [];
       }
@@ -724,45 +709,6 @@ class _ExpenseHistoryCard extends StatelessWidget {
           ),
           child: const Icon(Icons.delete_rounded, color: Colors.white),
         ),
-        confirmDismiss: (direction) async {
-          return await showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Удалить расход?'),
-              content: const Text('Это действие нельзя отменить'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Отмена'),
-                ),
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.error,
-                  ),
-                  child: const Text('Удалить'),
-                ),
-              ],
-            ),
-          );
-        },
-        onDismissed: (direction) async {
-          final user = context.read<UserProvider>().user;
-          if (user != null) {
-            await context.read<ExpenseProvider>().deleteExpense(
-              user.id,
-              expense.id,
-            );
-          }
-
-          if (!context.mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('🗑️ Расход удалён'),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        },
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -836,12 +782,12 @@ class _EmptyExpenses extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'Нет расходов',
+              'No expenses',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 8),
             Text(
-              'Начните отслеживать свои траты',
+              'Start tracking your investments',
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(color: AppColors.textGrey),
@@ -912,7 +858,7 @@ class _AddExpenseBottomSheetState extends State<_AddExpenseBottomSheet> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Добавить расход',
+                      'Add',
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                   ),
@@ -925,18 +871,18 @@ class _AddExpenseBottomSheetState extends State<_AddExpenseBottomSheet> {
               const SizedBox(height: 24),
 
               CustomTextField(
-                label: 'Сумма',
-                hint: '1000',
+                label: 'Amount',
+                hint: '...',
                 controller: _amountController,
                 keyboardType: TextInputType.number,
                 prefixIcon: Padding(padding: EdgeInsets.all(12), child: Text('₸', style: TextStyle(fontSize: 20))),
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Введите сумму';
+                    return 'Enter amount';
                   }
                   if (int.tryParse(value) == null || int.parse(value) <= 0) {
-                    return 'Введите корректную сумму';
+                    return 'Enter the correct amount';
                   }
                   return null;
                 },
@@ -944,7 +890,7 @@ class _AddExpenseBottomSheetState extends State<_AddExpenseBottomSheet> {
               const SizedBox(height: 16),
 
               Text(
-                'Категория',
+                'Category',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: isDark ? AppColors.textLight : AppColors.textDark,
@@ -959,8 +905,8 @@ class _AddExpenseBottomSheetState extends State<_AddExpenseBottomSheet> {
               const SizedBox(height: 16),
 
               CustomTextField(
-                label: 'Комментарий (опционально)',
-                hint: 'Например: Обед в столовой',
+                label: 'Description (optional)',
+                hint: '...',
                 controller: _noteController,
                 maxLines: 2,
                 prefixIcon: const Icon(Icons.note_rounded),
@@ -974,7 +920,7 @@ class _AddExpenseBottomSheetState extends State<_AddExpenseBottomSheet> {
               const SizedBox(height: 24),
 
               CustomButton(
-                text: 'Добавить',
+                text: 'Add',
                 onPressed: _saveExpense,
                 icon: Icons.check_rounded,
               ),
@@ -1006,7 +952,7 @@ class _AddExpenseBottomSheetState extends State<_AddExpenseBottomSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '✅ Расход ${expense.amount.toStringAsFixed(0)} ₸ добавлен',
+            '✅ ${expense.amount.toStringAsFixed(0)}₸ expense added',
           ),
           backgroundColor: AppColors.success,
           behavior: SnackBarBehavior.floating,
@@ -1102,7 +1048,7 @@ class _DateSelector extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Дата',
+          'Date',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.w600,
             color: isDark ? AppColors.textLight : AppColors.textDark,
@@ -1152,7 +1098,7 @@ class _DateSelector extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  DateFormat('d MMMM yyyy', 'ru_RU').format(selectedDate),
+                  DateFormat('d MMMM yyyy', 'en_US').format(selectedDate),
                   style: Theme.of(
                     context,
                   ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
@@ -1162,56 +1108,6 @@ class _DateSelector extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _FilterOptionsSheet extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.textGrey.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.filter_list_rounded,
-                  color: AppColors.primary,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text('Фильтр', style: Theme.of(context).textTheme.headlineSmall),
-            ],
-          ),
-          const SizedBox(height: 24),
-        ],
-      ),
     );
   }
 }

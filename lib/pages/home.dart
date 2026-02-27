@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../theme/colors.dart';
-import '../core/constants.dart';
+import '../theme/constants.dart';
 import '../data/providers.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -26,11 +26,11 @@ class HomeScreen extends StatelessWidget {
         },
         type: BottomNavigationBarType.fixed,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Главная'),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_month_rounded), label: 'Календарь'),
-          BottomNavigationBarItem(icon: Icon(Icons.smart_toy_rounded), label: 'ИИ-друг'),
-          BottomNavigationBarItem(icon: Icon(Icons.reviews_rounded), label: 'Отзывы'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_rounded), label: 'Профиль'),
+          BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.calendar_month_rounded), label: 'Calendar'),
+          BottomNavigationBarItem(icon: Icon(Icons.smart_toy_rounded), label: 'AI-friend'),
+          BottomNavigationBarItem(icon: Icon(Icons.reviews_rounded), label: 'Reviews'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_rounded), label: 'Profile'),
         ],
       ),
     );
@@ -100,7 +100,7 @@ class _HomeTabState extends State<HomeTab> {
               _isLoading
                   ? _ShimmerBox(width: 200, height: 32)
                   : Text(
-                      'Привет, ${user?.name.split(' ').first ?? 'Студент'}! 👋',
+                      'Hi, ${user?.name.split(' ')[1] ?? 'student'}! 👋',
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
               const SizedBox(height: 24),
@@ -109,7 +109,7 @@ class _HomeTabState extends State<HomeTab> {
               const SizedBox(height: 24),
 
               _SectionHeader(
-                title: 'Расписание на сегодня',
+                title: 'Schedule for today',
                 icon: Icons.calendar_today_rounded,
                 onTap: () => context.go('/schedule'),
                 isLoading: _isLoading,
@@ -122,7 +122,7 @@ class _HomeTabState extends State<HomeTab> {
               const SizedBox(height: 24),
 
               _SectionHeader(
-                title: 'Последние новости',
+                title: 'Latest college news',
                 icon: Icons.newspaper_rounded,
                 onTap: () => context.go('/news'),
                 isLoading: _isLoading,
@@ -135,7 +135,7 @@ class _HomeTabState extends State<HomeTab> {
               const SizedBox(height: 24),
 
               _SectionHeader(
-                title: 'Расходы за месяц',
+                title: 'Expenses per month',
                 icon: Icons.account_balance_wallet_rounded,
                 onTap: () => context.go('/expenses'),
                 isLoading: _isLoading,
@@ -151,7 +151,7 @@ class _HomeTabState extends State<HomeTab> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.go('/ai'),
-        tooltip: 'AI-помощник',
+        tooltip: 'AI-friend',
         child: const Icon(Icons.smart_toy_rounded),
       ),
     );
@@ -184,25 +184,25 @@ class _QuickActionsGrid extends StatelessWidget {
     final actions = [
       _QuickAction(
         icon: Icons.calendar_today_rounded,
-        title: 'Расписание',
+        title: 'Schedule',
         color: AppColors.primary,
         onTap: () => context.go('/schedule'),
       ),
       _QuickAction(
         icon: Icons.newspaper_rounded,
-        title: 'Новости',
+        title: 'News',
         color: AppColors.info,
         onTap: () => context.go('/news'),
       ),
       _QuickAction(
         icon: Icons.account_balance_wallet_rounded,
-        title: 'Расходы',
+        title: 'Expenses',
         color: AppColors.warning,
         onTap: () => context.go('/expenses'),
       ),
       _QuickAction(
         icon: Icons.smart_toy_rounded,
-        title: 'AI-помощник',
+        title: 'AI-friend',
         color: AppColors.secondary,
         onTap: () => context.go('/ai'),
       ),
@@ -307,7 +307,7 @@ class _SectionHeader extends StatelessWidget {
         const SizedBox(width: 8),
         Text(title, style: Theme.of(context).textTheme.headlineSmall),
         const Spacer(),
-        TextButton(onPressed: onTap, child: const Text('Все')),
+        TextButton(onPressed: onTap, child: const Text('All')),
       ],
     );
   }
@@ -393,7 +393,7 @@ class _LessonCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${lesson.teacher} • Каб. ${lesson.room}',
+                  '${lesson.teacher} • Room ${lesson.room}',
                   style: Theme.of(
                     context,
                   ).textTheme.bodySmall?.copyWith(color: AppColors.textGrey),
@@ -548,7 +548,7 @@ class _ExpensesSummary extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Всего потрачено',
+            'Total invested',
             style: TextStyle(color: Colors.white70, fontSize: 14),
           ),
           const SizedBox(height: 8),

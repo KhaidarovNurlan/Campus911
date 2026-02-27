@@ -42,18 +42,16 @@ class _LoginScreenState extends State<LoginScreen> {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Не удалось загрузить данные пользователя'),
+              content: Text('Failed to load user data'),
             ),
           );
         }
       }
     } on FirebaseAuthException catch (e) {
-      String message = 'Ошибка входа';
-      if (e.code == 'user-not-found') message = 'Пользователь не найден';
-      if (e.code == 'wrong-password') {
-        message = 'Неверный пароль (временно 12345678)';
-      }
-      if (e.code == 'invalid-email') message = 'Некорректный email';
+      String message = 'Login error';
+      if (e.code == 'user-not-found') message = 'Usser not found';
+      if (e.code == 'wrong-password') message = 'Wrong password';
+      if (e.code == 'invalid-email') message = 'Invalid e-mail';
 
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -63,7 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Ошибка: $e')));
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -72,14 +70,14 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Вход в аккаунт')),
+      appBar: AppBar(title: const Text('Login')),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             CustomTextField(
-              label: 'Электронная почта',
+              label: 'E-mail',
               hint: '...',
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
@@ -87,7 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 24),
             CustomTextField(
-              label: 'Пароль',
+              label: 'Password',
               hint: '...',
               controller: _passwordController,
               obscureText: true,
@@ -95,7 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 24),
             CustomButton(
-              text: 'Войти',
+              text: 'Enter',
               onPressed: _login,
               isLoading: _isLoading,
               icon: Icons.login_rounded,
@@ -103,7 +101,7 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 24),
             TextButton(
               onPressed: () => context.go('/auth'),
-              child: const Text('← Вернуться к регистрации'),
+              child: const Text('← Return to authorization'),
             ),
           ],
         ),

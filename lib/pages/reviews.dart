@@ -5,7 +5,7 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:intl/intl.dart';
 
 import '../theme/colors.dart';
-import '../core/constants.dart';
+import '../theme/constants.dart';
 import '../theme/custom_button.dart';
 import '../theme/custom_text_field.dart';
 import '../data/models.dart';
@@ -28,21 +28,21 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Отзывы о преподавателях'),
+        title: const Text('Reviews about teachers'),
         actions: [
           PopupMenuButton<String>(
             icon: const Icon(Icons.sort_rounded),
-            tooltip: 'Сортировка',
+            tooltip: 'Sorting',
             onSelected: (value) {
               setState(() => _sortBy = value);
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(value: 'rating', child: Text('По рейтингу')),
+              const PopupMenuItem(value: 'rating', child: Text('By rating')),
               const PopupMenuItem(
                 value: 'reviews',
-                child: Text('По количеству отзывов'),
+                child: Text('By number of reviews'),
               ),
-              const PopupMenuItem(value: 'name', child: Text('По имени')),
+              const PopupMenuItem(value: 'name', child: Text('By name')),
             ],
           ),
         ],
@@ -147,7 +147,7 @@ class _TeacherCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              '(${teacher.reviewCount} отзывов)',
+                              '(${teacher.reviewCount} reviews)',
                               style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(color: AppColors.textGrey),
                             ),
@@ -265,12 +265,12 @@ class _EmptyTeachers extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'Нет преподавателей',
+              'No teachers',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 8),
             Text(
-              'Список преподавателей пуст',
+              'The list of teachers is empty',
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(color: AppColors.textGrey),
@@ -307,7 +307,7 @@ class _TeacherDetailsScreenState extends State<_TeacherDetailsScreen> {
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.go('/home'),
         ),
-        title: const Text('Отзывы'),
+        title: const Text('Reviews'),
       ),
       body: Column(
         children: [
@@ -336,7 +336,7 @@ class _TeacherDetailsScreenState extends State<_TeacherDetailsScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddReviewDialog(context),
         icon: const Icon(Icons.rate_review_rounded),
-        label: const Text('Оставить отзыв'),
+        label: const Text('Leave a review'),
       ),
     );
   }
@@ -411,7 +411,7 @@ class _TeacherHeader extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${teacher.reviewCount} отзывов',
+                    '${teacher.reviewCount} reviews',
                     style: Theme.of(
                       context,
                     ).textTheme.bodySmall?.copyWith(color: AppColors.textGrey),
@@ -444,7 +444,7 @@ class _StarFilter extends StatelessWidget {
         child: Row(
           children: [
             _FilterChip(
-              label: 'Все',
+              label: 'All',
               isSelected: selectedRating == 'all',
               onTap: () => onRatingChanged('all'),
             ),
@@ -562,7 +562,7 @@ class _ReviewCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        DateFormat('d MMM yyyy', 'ru_RU').format(review.date),
+                        DateFormat('d MMM yyyy', 'en_US').format(review.date),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColors.textGrey,
                         ),
@@ -680,7 +680,7 @@ class _AddReviewBottomSheetState extends State<_AddReviewBottomSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Оставить отзыв',
+                          'Leave a review',
                           style: Theme.of(context).textTheme.headlineSmall,
                         ),
                         Text(
@@ -703,7 +703,7 @@ class _AddReviewBottomSheetState extends State<_AddReviewBottomSheet> {
                 child: Column(
                   children: [
                     Text(
-                      'Ваша оценка',
+                      'Rating',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -739,17 +739,14 @@ class _AddReviewBottomSheetState extends State<_AddReviewBottomSheet> {
               const SizedBox(height: 24),
 
               CustomTextField(
-                label: 'Комментарий',
-                hint: 'Поделитесь своим мнением...',
+                label: 'Comment (required)',
+                hint: '...',
                 controller: _commentController,
                 maxLines: 4,
                 prefixIcon: const Icon(Icons.comment_rounded),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Напишите комментарий';
-                  }
-                  if (value.length < 10) {
-                    return 'Минимум 10 символов';
+                    return 'Write a comment';
                   }
                   return null;
                 },
@@ -759,11 +756,11 @@ class _AddReviewBottomSheetState extends State<_AddReviewBottomSheet> {
               SwitchListTile(
                 value: _isAnonymous,
                 onChanged: (value) => setState(() => _isAnonymous = value),
-                title: const Text('Оставить анонимно'),
+                title: const Text('Leave anonymously'),
                 subtitle: Text(
                   _isAnonymous
-                      ? 'Ваше имя не будет показано'
-                      : 'Отзыв будет от вашего имени',
+                      ? 'Your name will not be displayed'
+                      : 'The review will be posted on your behalf',
                   style: Theme.of(
                     context,
                   ).textTheme.bodySmall?.copyWith(color: AppColors.textGrey),
@@ -774,7 +771,7 @@ class _AddReviewBottomSheetState extends State<_AddReviewBottomSheet> {
               const SizedBox(height: 24),
 
               CustomButton(
-                text: 'Отправить',
+                text: 'Publish',
                 onPressed: () => _submitReview(userProvider),
                 icon: Icons.send_rounded,
               ),
@@ -786,11 +783,11 @@ class _AddReviewBottomSheetState extends State<_AddReviewBottomSheet> {
   }
 
   String _getRatingText(double rating) {
-    if (rating >= 4.5) return 'Отлично!';
-    if (rating >= 3.5) return 'Хорошо';
-    if (rating >= 2.5) return 'Нормально';
-    if (rating >= 1.5) return 'Плохо';
-    return 'Ужасно';
+    if (rating >= 4.5) return 'Awesome!';
+    if (rating >= 3.5) return 'Good';
+    if (rating >= 2.5) return 'Normal';
+    if (rating >= 1.5) return 'Bad';
+    return 'Terrible!';
   }
 
   void _submitReview(UserProvider userProvider) {
@@ -799,7 +796,7 @@ class _AddReviewBottomSheetState extends State<_AddReviewBottomSheet> {
     final review = ReviewModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       teacherId: widget.teacher.id,
-      studentName: userProvider.user?.name ?? 'Студент',
+      studentName: userProvider.user?.name ?? 'student',
       rating: _rating,
       comment: _commentController.text,
       date: DateTime.now(),
@@ -812,7 +809,7 @@ class _AddReviewBottomSheetState extends State<_AddReviewBottomSheet> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('✅ Отзыв успешно добавлен'),
+        content: Text('✅ Review successfully added'),
         backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
       ),
