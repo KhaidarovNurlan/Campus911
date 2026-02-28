@@ -428,9 +428,6 @@ class _AddLessonBottomSheetState extends State<_AddLessonBottomSheet> {
             children: [
               Row(
                 children: [
-                  Icon(isEditing ? Icons.edit_rounded : Icons.add_rounded, color: AppColors.primary),
-                  const SizedBox(width: 12),
-                  Text(isEditing ? 'Edit lesson' : 'Add a lesson', style: Theme.of(context).textTheme.headlineSmall),
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -447,10 +444,7 @@ class _AddLessonBottomSheetState extends State<_AddLessonBottomSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Add a lesson',
-                          style: Theme.of(context).textTheme.headlineSmall,
-                        ),
+                        Text(isEditing ? 'Edit lesson' : 'Add a lesson', style: Theme.of(context).textTheme.headlineSmall),
                         Text(
                           widget.selectedDay,
                           style: Theme.of(context).textTheme.bodySmall

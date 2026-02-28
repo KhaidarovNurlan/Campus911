@@ -29,7 +29,7 @@ class AppConstants {
     {'id': 'sporting', 'name': 'Sporting', 'emoji': '🏀'},
   ];
 
-  static const List<Map<String, String>> eventTypes = [
+  static const List<Map<String, String>> eventCategories = [
     {'id': 'academic', 'name': 'Academic', 'emoji': '📚'},
     {'id': 'deadline', 'name': 'Deadline', 'emoji': '⏰'},
     {'id': 'personal', 'name': 'Personal', 'emoji': '🎉'},
@@ -45,8 +45,4 @@ class AppConstants {
     'Sat',
     'Sun',
   ];
-
-  static const String emptyScheduleMessage = 'Schedule not yet added';
-  static const String emptyNewsMessage = 'No news yet';
-  static const String emptyReviewsMessage = 'No reviews yet';
 }

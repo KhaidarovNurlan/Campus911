@@ -5,7 +5,6 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:intl/intl.dart';
 
 import '../theme/colors.dart';
-import '../theme/constants.dart';
 import '../theme/custom_button.dart';
 import '../theme/custom_text_field.dart';
 import '../data/models.dart';
@@ -605,7 +604,7 @@ class _EmptyReviews extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              AppConstants.emptyReviewsMessage,
+              'No reviews yet',
               style: Theme.of(
                 context,
               ).textTheme.bodyLarge?.copyWith(color: AppColors.textGrey),

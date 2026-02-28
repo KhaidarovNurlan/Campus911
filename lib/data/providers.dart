@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'models.dart';
-import 'firestore_service.dart';
+import 'firebase_service.dart';
 
 class ThemeProvider extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.light;
@@ -25,87 +24,118 @@ class ThemeProvider extends ChangeNotifier {
 }
 
 class UserProvider extends ChangeNotifier {
+  final _firebase = FirebaseService();
   UserModel? _user;
+  bool _isLoading = false;
+
   UserModel? get user => _user;
-  bool get isAuthenticated => _user != null;
+  bool get isAuthenticated => _firebase.isFirebaseLoggedIn;
+  bool get isLoading => _isLoading;
   bool get isHeadman => _user?.isHeadman ?? false;
   bool get isStudent => _user?.isStudent ?? false;
   String get college => _user?.college ?? '';
   String get groupName => _user?.groupName ?? '';
 
-  void setUser(UserModel user) {
-    _user = user;
+  Future<UserModel?> fetchUserData() async {
+    _user = await _firebase.fetchCurrentUser();
     notifyListeners();
+    return _user;
   }
 
-  Future<void> logout() async {
-    await FirebaseAuth.instance.signOut();
-    _user = null;
-    notifyListeners();
+  Future<bool> checkGroupHeadman(String college, String group) async {
+    return await _firebase.isHeadmanTaken(college, group);
   }
 
-  void updateProfile({
-    String? name,
-    String? email,
-    String? college,
-    String? groupName,
-  }) {
-    if (_user == null) return;
-    _user = UserModel(
-      id: _user!.id,
-      name: name ?? _user!.name,
-      email: email ?? _user!.email,
-      college: college ?? _user!.college,
-      groupName: groupName ?? _user!.groupName,
-      role: _user!.role,
-    );
-    notifyListeners();
-  }
-}
-
-class ScheduleProvider extends ChangeNotifier {
-  final _firestore = FirestoreService();
-  final List<LessonModel> _lessons = [];
-  String _selectedDay = 'Monday';
-  bool _isLoading = false;
-
-  List<LessonModel> get lessons => _lessons;
-  String get selectedDay => _selectedDay;
-  bool get isLoading => _isLoading;
-
-  Future<void> loadSchedule(String college, String groupName) async {
+  Future<void> authorize({
+    required String email,
+    required String password,
+    required String name,
+    required String college,
+    required String group,
+    required String role,
+  }) async {
     _isLoading = true;
     notifyListeners();
-
     try {
-      final fetched = await _firestore.getLessons(college, groupName);
-      _lessons.clear();
-      _lessons.addAll(fetched);
+      await _firebase.authorizeUser(
+        email: email,
+        password: password,
+        name: name,
+        college: college,
+        group: group,
+        role: role,
+      );
+
+      final currentUser = _firebase.currentUid;
+      if (currentUser != null) {
+        await fetchUserData();
+      }
     } catch (e) {
-      debugPrint('Error loading schedule: $e');
+      debugPrint("❌ Register Error: $e");
+      rethrow;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
+  Future<void> login(String email, String password) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final firebaseUser = await _firebase.signIn(email, password);
+      if (firebaseUser != null) {
+        final userData = await _firebase.fetchCurrentUser();
+        if (userData != null) {
+          _user = userData;
+        }
+      }
+    } catch (e) {
+      debugPrint("❌ Login Error: $e");
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> logout() async {
+    await _firebase.signOut();
+    _user = null;
+    notifyListeners();
+  }
+
+  void setUser(UserModel user) {
+    _user = user;
+    notifyListeners();
+  }
+}
+
+class ScheduleProvider extends ChangeNotifier {
+  final _firebase = FirebaseService();
+  final List<LessonModel> _lessons = [];
+
+  List<LessonModel> get lessons => _lessons;
+
+  Future<void> loadSchedule(String college, String groupName) async {
+    _lessons
+      ..clear()
+      ..addAll(await _firebase.getLessons(college, groupName));
+    notifyListeners();
+  }
+
   List<LessonModel> getLessonsForDay(String day) {
     return _lessons.where((lesson) => lesson.dayOfWeek == day).toList();
   }
 
-  void setSelectedDay(String day) {
-    _selectedDay = day;
-    notifyListeners();
-  }
-
   Future<void> addLesson(LessonModel lesson) async {
-    await _firestore.addLesson(lesson);
+    await _firebase.addLesson(lesson);
     _lessons.add(lesson);
     notifyListeners();
   }
 
   Future<void> updateLesson(LessonModel updatedLesson) async {
-    await _firestore.updateLesson(updatedLesson);
+    await _firebase.updateLesson(updatedLesson);
     final index = _lessons.indexWhere((l) => l.id == updatedLesson.id);
     if (index != -1) {
       _lessons[index] = updatedLesson;
@@ -114,137 +144,50 @@ class ScheduleProvider extends ChangeNotifier {
   }
 
   Future<void> deleteLesson(String id) async {
-    await _firestore.deleteLesson(id);
+    await _firebase.deleteLesson(id);
     _lessons.removeWhere((lesson) => lesson.id == id);
     notifyListeners();
-  }
-
-  void clearLessons() {
-    _lessons.clear();
-    notifyListeners();
-  }
-}
-
-class ExpenseProvider with ChangeNotifier {
-  final _firestore = FirestoreService();
-  final List<ExpenseModel> _expenses = [];
-  List<ExpenseModel> get expenses => _expenses;
-  double get totalAmount => _expenses.fold(0, (sum, e) => sum + e.amount);
-  Map<String, double> get expensesByCategory {
-    final map = <String, double>{};
-    for (var e in _expenses) {
-      map[e.category] = (map[e.category] ?? 0) + e.amount;
-    }
-    return map;
-  }
-
-  Future<void> loadExpenses(String userId) async {
-    _expenses
-      ..clear()
-      ..addAll(await _firestore.getExpenses(userId));
-    notifyListeners();
-  }
-
-  Future<void> addExpense(String userId, ExpenseModel expense) async {
-    _expenses.add(expense);
-    notifyListeners();
-    await _firestore.addExpense(userId, expense);
-  }
-
-  Future<void> deleteExpense(String userId, String id) async {
-    _expenses.removeWhere((e) => e.id == id);
-    notifyListeners();
-    await _firestore.deleteExpense(userId, id);
   }
 }
 
 class NewsProvider extends ChangeNotifier {
+  final _firebase = FirebaseService();
   final List<NewsModel> _news = [];
-  bool _isLoading = false;
   String? _selectedCategory;
-  bool get isLoading => _isLoading;
-  List<NewsModel> get news => _selectedCategory == null
-      ? _news
-      : _news.where((n) => n.category == _selectedCategory).toList();
+
   String? get selectedCategory => _selectedCategory;
+  List<NewsModel> get news {
+    if (_selectedCategory == null) return _news;
+    return _news.where((n) => n.category == _selectedCategory).toList();
+  }
+
   void setCategory(String? category) {
     _selectedCategory = category;
     notifyListeners();
   }
 
   Future<void> loadNews(String college) async {
-    _isLoading = true;
-    notifyListeners();
-    final firestore = FirestoreService();
-    final fetched = await firestore.getNews(college);
     _news
       ..clear()
-      ..addAll(fetched);
-    _isLoading = false;
+      ..addAll(await _firebase.getNews(college));
     notifyListeners();
   }
 
   Future<void> addNews(NewsModel news) async {
-    final firestore = FirestoreService();
-    await firestore.addNews(news);
+    await _firebase.addNews(news);
     _news.insert(0, news);
     notifyListeners();
   }
 
   Future<void> deleteNews(String id) async {
-    final firestore = FirestoreService();
-    await firestore.deleteNews(id);
+    await _firebase.deleteNews(id);
     _news.removeWhere((n) => n.id == id);
     notifyListeners();
   }
 }
 
-class CalendarProvider extends ChangeNotifier {
-  final List<EventModel> _events = [];
-  final _firestoreService = FirestoreService();
-
-  DateTime _selectedDate = DateTime.now();
-
-  List<EventModel> get events => _events;
-  DateTime get selectedDate => _selectedDate;
-
-  Future<void> loadEvents(String college) async {
-    final events = await _firestoreService.getEvents(college);
-    _events
-      ..clear()
-      ..addAll(events);
-    notifyListeners();
-  }
-
-  Future<void> addEvent(EventModel event) async {
-    await _firestoreService.addEvent(event);
-    _events.add(event);
-    notifyListeners();
-  }
-
-  Future<void> deleteEvent(String id) async {
-    await _firestoreService.deleteEvent(id);
-    _events.removeWhere((e) => e.id == id);
-    notifyListeners();
-  }
-
-  void setSelectedDate(DateTime date) {
-    _selectedDate = date;
-    notifyListeners();
-  }
-
-  List<EventModel> getEventsForDate(DateTime date) {
-    return _events.where((event) {
-      return event.date.year == date.year &&
-          event.date.month == date.month &&
-          event.date.day == date.day;
-    }).toList();
-  }
-}
-
 class ReviewProvider extends ChangeNotifier {
-  final _firestore = FirestoreService();
-
+  final _firebase = FirebaseService();
   final List<TeacherModel> _teachers = [
     TeacherModel(
       id: '1',
@@ -276,33 +219,8 @@ class ReviewProvider extends ChangeNotifier {
     return _reviews[teacherId] ?? [];
   }
 
-  Future<void> loadData(String college) async {
-    final allReviews = await _firestore.getReviews(college);
-
-    _reviews.clear();
-    for (final review in allReviews) {
-      _reviews.putIfAbsent(review.teacherId, () => []).add(review);
-    }
-
-    for (var i = 0; i < _teachers.length; i++) {
-      final teacher = _teachers[i];
-      final teacherReviews = _reviews[teacher.id] ?? [];
-      if (teacherReviews.isNotEmpty) {
-        final avg =
-            teacherReviews.map((r) => r.rating).reduce((a, b) => a + b) /
-            teacherReviews.length;
-        _teachers[i] = teacher.copyWith(
-          rating: avg,
-          reviewCount: teacherReviews.length,
-        );
-      }
-    }
-
-    notifyListeners();
-  }
-
   Future<void> addReview(ReviewModel review) async {
-    await _firestore.addReview(review);
+    await _firebase.addReview(review);
 
     _reviews.putIfAbsent(review.teacherId, () => []).insert(0, review);
     final teacherIndex = _teachers.indexWhere((t) => t.id == review.teacherId);
@@ -322,21 +240,21 @@ class ReviewProvider extends ChangeNotifier {
 }
 
 class ChatProvider extends ChangeNotifier {
+  final _firebase = FirebaseService();
   final List<MessageModel> _messages = [];
-  final FirestoreService _firestore = FirestoreService();
-  bool isTyping = false;
   ChatSession? _chatSession;
   final GenerativeModel _model = GenerativeModel(
     model: 'gemini-2.5-flash',
     apiKey: dotenv.env['GEMINI_API_KEY'] ?? '',
   );
+  bool isTyping = false;
 
   List<MessageModel> get messages => _messages;
 
   Future<void> loadChatHistory(String userId) async {
-    final history = await _firestore.getMessages(userId);
-    _messages.clear();
-    _messages.addAll(history);
+    _messages
+      ..clear()
+      ..addAll(await _firebase.getMessages(userId));
     _chatSession = null;
     notifyListeners();
   }
@@ -357,9 +275,9 @@ class ChatProvider extends ChangeNotifier {
       isMe: true,
     );
 
+    await _firebase.saveMessage(userId, userMsg);
     _messages.add(userMsg);
     notifyListeners();
-    await _firestore.saveMessage(userId, userMsg);
 
     isTyping = true;
     notifyListeners();
@@ -385,9 +303,9 @@ class ChatProvider extends ChangeNotifier {
       );
 
       _messages.add(botMsg);
-      await _firestore.saveMessage(userId, botMsg);
+      await _firebase.saveMessage(userId, botMsg);
     } catch (e) {
-      debugPrint("AI Chat Error: $e");
+      debugPrint("❌ Chat Error: $e");
     } finally {
       isTyping = false;
       notifyListeners();
@@ -395,9 +313,77 @@ class ChatProvider extends ChangeNotifier {
   }
 
   Future<void> clearChatHistory(String userId) async {
-    await _firestore.clearChatHistory(userId);
+    await _firebase.deleteMessages(userId);
     _messages.clear();
     _chatSession = null;
+    notifyListeners();
+  }
+}
+
+class ExpenseProvider with ChangeNotifier {
+  final _firebase = FirebaseService();
+  final List<ExpenseModel> _expenses = [];
+
+  List<ExpenseModel> get expenses => _expenses;
+  double get totalAmount => _expenses.fold(0, (sum, e) => sum + e.amount);
+  Map<String, double> get expensesByCategory {
+    final map = <String, double>{};
+    for (var e in _expenses) {
+      map[e.category] = (map[e.category] ?? 0) + e.amount;
+    }
+    return map;
+  }
+
+  Future<void> loadExpenses(String userId) async {
+    _expenses
+      ..clear()
+      ..addAll(await _firebase.getExpenses(userId));
+    notifyListeners();
+  }
+
+  Future<void> addExpense(String userId, ExpenseModel expense) async {
+    await _firebase.addExpense(userId, expense);
+    _expenses.add(expense);
+    notifyListeners();
+  }
+
+  Future<void> deleteExpense(String userId, String id) async {
+    await _firebase.deleteExpense(userId, id);
+    _expenses.removeWhere((e) => e.id == id);
+    notifyListeners();
+  }
+}
+
+class CalendarProvider extends ChangeNotifier {
+  final _firebase = FirebaseService();
+  final List<EventModel> _events = [];
+
+  List<EventModel> get events => _events;
+
+  Future<void> loadEvents(String college) async {
+    _events
+      ..clear()
+      ..addAll(await _firebase.getEvents(college));
+    notifyListeners();
+  }
+
+  List<EventModel> getEventsForDate(DateTime date) {
+    return _events.where((event) {
+      return event.date.year == date.year &&
+          event.date.month == date.month &&
+          event.date.day == date.day;
+    }).toList();
+  }
+
+  Future<void> addEvent(EventModel event) async {
+    await _firebase.addEvent(event);
+    _events.add(event);
+    notifyListeners();
+  }
+
+  Future<void> deleteEvent(String id) async {
+    await _firebase.deleteEvent(id);
+    _events.removeWhere((e) => e.id == id);
     notifyListeners();
   }
 }
@@ -407,10 +393,10 @@ class AppProviders {
     ChangeNotifierProvider<ThemeProvider>(create: (_) => ThemeProvider()),
     ChangeNotifierProvider<UserProvider>(create: (_) => UserProvider()),
     ChangeNotifierProvider<ScheduleProvider>(create: (_) => ScheduleProvider()),
+    ChangeNotifierProvider<NewsProvider>(create: (_) => NewsProvider()),
+    ChangeNotifierProvider<ReviewProvider>(create: (_) => ReviewProvider()),
     ChangeNotifierProvider<ChatProvider>(create: (_) => ChatProvider()),
     ChangeNotifierProvider<ExpenseProvider>(create: (_) => ExpenseProvider()),
-    ChangeNotifierProvider<NewsProvider>(create: (_) => NewsProvider()),
     ChangeNotifierProvider<CalendarProvider>(create: (_) => CalendarProvider()),
-    ChangeNotifierProvider<ReviewProvider>(create: (_) => ReviewProvider()),
   ];
 }

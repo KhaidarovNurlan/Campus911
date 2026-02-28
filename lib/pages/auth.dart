@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import '../data/providers.dart';
+
 import 'dart:async';
 
 import '../theme/colors.dart';
@@ -247,16 +248,13 @@ class _AuthFormState extends State<_AuthForm> {
     if (_selectedGroup == null) return;
 
     try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .where('college', isEqualTo: _college)
-          .where('groupName', isEqualTo: _selectedGroup)
-          .where('role', isEqualTo: 'headman')
-          .limit(1)
-          .get();
+      final bool isTaken = await context.read<UserProvider>().checkGroupHeadman(
+        _college,
+        _selectedGroup!,
+      );
 
       setState(() {
-        _isHeadmanTaken = snapshot.docs.isNotEmpty;
+        _isHeadmanTaken = isTaken;
         if (_isHeadmanTaken && _role == 'headman') {
           _role = 'student';
         }
@@ -281,53 +279,21 @@ class _AuthFormState extends State<_AuthForm> {
     setState(() => _isLoading = true);
 
     try {
-      if (_role == 'headman') {
-        final existing = await FirebaseFirestore.instance
-            .collection('users')
-            .where('college', isEqualTo: _college)
-            .where('groupName', isEqualTo: _selectedGroup)
-            .where('role', isEqualTo: 'headman')
-            .limit(1)
-            .get();
-
-        if (existing.docs.isNotEmpty) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('The role of headman in this group is already taken!')),
-            );
-          }
-          _checkHeadmanAvailability();
-          setState(() => _isLoading = false);
-          return;
-        }
-      }
-
-      final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      await context.read<UserProvider>().authorize(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
+        name: _nameController.text.trim(),
+        college: _college,
+        group: _selectedGroup!,
+        role: _role,
       );
 
-      final user = userCredential.user;
-
-      if (user != null) {
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-          'name': _nameController.text.trim(),
-          'email': _emailController.text.trim(),
-          'college': _college,
-          'groupName': _selectedGroup,
-          'role': _role,
-          'uid': user.uid,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-
-        if (!mounted) return;
-        context.go('/home');
-      }
-    } on FirebaseAuthException catch (e) {
-      String message = 'Authorization error';
-      if (e.code == 'email-already-in-use') message = 'This email is already in use';
+      if (mounted) context.go('/home');
+    } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

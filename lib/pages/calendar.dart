@@ -745,7 +745,7 @@ class _AddEventBottomSheetState extends State<_AddEventBottomSheet> {
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: AppConstants.eventTypes.map((type) {
+                children: AppConstants.eventCategories.map((type) {
                   final isSelected = _selectedType == type['id'];
                   return ChoiceChip(
                     label: Row(

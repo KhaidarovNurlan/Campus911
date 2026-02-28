@@ -17,9 +17,6 @@ class UserModel {
     required this.role,
   });
 
-  bool get isHeadman => role == 'headman';
-  bool get isStudent => role == 'student';
-
   factory UserModel.fromMap(Map<String, dynamic> map, String id) {
     return UserModel(
       id: id,
@@ -30,6 +27,19 @@ class UserModel {
       role: map['role'] ?? 'student',
     );
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'email': email,
+      'college': college,
+      'groupName': groupName,
+      'role': role,
+    };
+  }
+
+  bool get isHeadman => role == 'headman';
+  bool get isStudent => role == 'student';
 }
 
 class LessonModel {
@@ -57,11 +67,37 @@ class LessonModel {
     required this.groupName,
   });
 
-  String get timeRange => '${_formatTime(startTime)} - ${_formatTime(endTime)}';
-
-  String _formatTime(DateTime time) {
-    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+  factory LessonModel.fromMap(Map<String, dynamic> map, String id) {
+    return LessonModel(
+      id: id,
+      subject: map['subject'] ?? '',
+      teacher: map['teacher'] ?? '',
+      room: map['room'] ?? '',
+      startTime: (map['startTime'] as Timestamp).toDate(),
+      endTime: (map['endTime'] as Timestamp).toDate(),
+      type: map['type'] ?? 'lesson',
+      dayOfWeek: map['dayOfWeek'] ?? '',
+      college: map['college'] ?? '',
+      groupName: map['groupName'] ?? '',
+    );
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'subject': subject,
+      'teacher': teacher,
+      'room': room,
+      'startTime': Timestamp.fromDate(startTime),
+      'endTime': Timestamp.fromDate(endTime),
+      'type': type,
+      'dayOfWeek': dayOfWeek,
+      'college': college,
+      'groupName': groupName,
+    };
+  }
+
+  String get timeRange => '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')} - ${endTime.hour.toString().padLeft(2, '0')}:${endTime.minute.toString().padLeft(2, '0')}';
 
   String get typeText {
     switch (type) {
@@ -72,103 +108,59 @@ class LessonModel {
   }
 }
 
-class MessageModel {
+class NewsModel {
   final String id;
-  final String text;
-  final String senderId;
-  final String senderName;
-  final DateTime timestamp;
-  final bool isMe;
+  final String title;
+  final String content;
+  final String category;
+  final DateTime date;
+  final String college;
 
-  MessageModel({
+  NewsModel({
     required this.id,
-    required this.text,
-    required this.senderId,
-    required this.senderName,
-    required this.timestamp,
-    required this.isMe,
+    required this.title,
+    required this.content,
+    required this.category,
+    required this.date,
+    required this.college,
   });
 
-  factory MessageModel.fromMap(String id, Map<String, dynamic> map) {
-    return MessageModel(
+  factory NewsModel.fromMap(Map<String, dynamic> map, String id) {
+    return NewsModel(
       id: id,
-      text: map['text'] ?? '',
-      senderId: map['senderId'] ?? '',
-      senderName: map['senderName'] ?? '',
-      timestamp: (map['timestamp'] as Timestamp).toDate(),
-      isMe: map['isMe'] ?? false,
+      title: map['title'] ?? '',
+      content: map['content'] ?? '',
+      category: map['category'] ?? 'general',
+      date: (map['date'] as Timestamp).toDate(),
+      college: map['college'] ?? '',
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'text': text,
-      'senderId': senderId,
-      'senderName': senderName,
-      'timestamp': timestamp,
-      'isMe': isMe,
+      'title': title,
+      'content': content,
+      'category': category,
+      'date': Timestamp.fromDate(date),
+      'college': college,
     };
   }
-}
-
-class ExpenseModel {
-  final String id;
-  final double amount;
-  final String category;
-  final DateTime date;
-  final String? note;
-
-  ExpenseModel({
-    required this.id,
-    required this.amount,
-    required this.category,
-    required this.date,
-    this.note,
-  });
 
   String get categoryEmoji {
     switch (category) {
-      case 'transport':
-        return '🚌';
-      case 'food':
-        return '🍔';
-      case 'books':
-        return '📚';
-      case 'housing':
-        return '🏠';
-      case 'entertainment':
-        return '🎮';
-      case 'health':
-        return '💊';
-      case 'clothing':
-        return '👕';
-      case 'communication':
-        return '📱';
-      default:
-        return '💰';
+      case 'events': return '📢';
+      case 'academic': return '🎓';
+      case 'sporting': return '🏀';
+      default: return '📰';
     }
   }
 
   String get categoryName {
     switch (category) {
-      case 'transport':
-        return 'Transport';
-      case 'food':
-        return 'Food';
-      case 'books':
-        return 'Books';
-      case 'housing':
-        return 'Housing';
-      case 'entertainment':
-        return 'Entertainment';
-      case 'health':
-        return 'Health';
-      case 'clothing':
-        return 'Clothing';
-      case 'communication':
-        return 'Communication';
-      default:
-        return 'Other';
+      case 'events': return 'Events';
+      case 'academic': return 'Academic';
+      case 'sporting': return 'Sporting';
+      default: return 'General';
     }
   }
 }
@@ -188,7 +180,7 @@ class TeacherModel {
     required this.reviewCount,
   });
 
-  factory TeacherModel.fromMap(Map<String, dynamic> map) {
+  factory TeacherModel.fromMap(Map<String, dynamic> map, String id) {
     return TeacherModel(
       id: map['id'] ?? '',
       name: map['name'] ?? '',
@@ -245,16 +237,14 @@ class ReviewModel {
 
   String get displayName => isAnonymous ? 'Anonymous' : studentName;
 
-  factory ReviewModel.fromMap(Map<String, dynamic> map) {
+  factory ReviewModel.fromMap(Map<String, dynamic> map, String id) {
     return ReviewModel(
-      id: map['id'] ?? '',
+      id: id,
       teacherId: map['teacherId'] ?? '',
       studentName: map['studentName'] ?? '',
       rating: (map['rating'] ?? 0).toDouble(),
       comment: map['comment'] ?? '',
-      date: (map['date'] is Timestamp)
-          ? (map['date'] as Timestamp).toDate()
-          : DateTime.tryParse(map['date'] ?? '') ?? DateTime.now(),
+      date: (map['date'] as Timestamp).toDate(),
       isAnonymous: map['isAnonymous'] ?? false,
     );
   }
@@ -266,53 +256,84 @@ class ReviewModel {
       'studentName': studentName,
       'rating': rating,
       'comment': comment,
-      'date': date,
+      'date': Timestamp.fromDate(date),
       'isAnonymous': isAnonymous,
     };
   }
 }
 
-class NewsModel {
+class MessageModel {
   final String id;
-  final String title;
-  final String content;
-  final String category;
-  final DateTime date;
-  final String college;
+  final String text;
+  final String senderId;
+  final String senderName;
+  final DateTime timestamp;
+  final bool isMe;
 
-  NewsModel({
+  MessageModel({
     required this.id,
-    required this.title,
-    required this.content,
-    required this.category,
-    required this.date,
-    required this.college,
+    required this.text,
+    required this.senderId,
+    required this.senderName,
+    required this.timestamp,
+    required this.isMe,
   });
 
-  String get categoryEmoji {
-    switch (category) {
-      case 'events':
-        return '📢';
-      case 'academic':
-        return '🎓';
-      case 'sporting':
-        return '🏀';
-      default:
-        return '📰';
-    }
+  factory MessageModel.fromMap(Map<String, dynamic> map, String id) {
+    return MessageModel(
+      id: id,
+      text: map['text'] ?? '',
+      senderId: map['senderId'] ?? '',
+      senderName: map['senderName'] ?? '',
+      timestamp: (map['timestamp'] as Timestamp).toDate(),
+      isMe: map['isMe'] ?? false,
+    );
   }
 
-  String get categoryName {
-    switch (category) {
-      case 'events':
-        return 'Events';
-      case 'academic':
-        return 'Academic';
-      case 'sporting':
-        return 'Sporting';
-      default:
-        return '';
-    }
+  Map<String, dynamic> toMap() {
+    return {
+      'text': text,
+      'senderId': senderId,
+      'senderName': senderName,
+      'timestamp': Timestamp.fromDate(timestamp),
+      'isMe': isMe,
+    };
+  }
+}
+
+class ExpenseModel {
+  final String id;
+  final double amount;
+  final String category;
+  final DateTime date;
+  final String? note;
+
+  ExpenseModel({
+    required this.id,
+    required this.amount,
+    required this.category,
+    required this.date,
+    this.note,
+  });
+
+  factory ExpenseModel.fromMap(Map<String, dynamic> map, String id) {
+    return ExpenseModel(
+      id: id,
+      amount: (map['amount'] as num).toDouble(),
+      category: map['category'] ?? 'food',
+      date: (map['date'] as Timestamp).toDate(),
+      note: map['note'],
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'amount': amount,
+      'category': category,
+      'date': Timestamp.fromDate(date),
+      'note': note,
+    };
   }
 }
 
@@ -335,16 +356,11 @@ class EventModel {
 
   String get typeEmoji {
     switch (type) {
-      case 'academic':
-        return '📚';
-      case 'deadline':
-        return '⏰';
-      case 'personal':
-        return '🎉';
-      case 'news':
-        return '📢';
-      default:
-        return '📅';
+      case 'academic': return '📚';
+      case 'deadline': return '⏰';
+      case 'personal': return '🎉';
+      case 'news': return '📢';
+      default: return '📅';
     }
   }
 
@@ -352,10 +368,8 @@ class EventModel {
     return EventModel(
       id: id,
       title: map['title'] ?? '',
-      date: (map['date'] is Timestamp)
-          ? (map['date'] as Timestamp).toDate()
-          : DateTime.tryParse(map['date'] ?? '') ?? DateTime.now(),
-      type: map['type'] ?? 'personal',
+      date: (map['date'] as Timestamp).toDate(),
+      type: map['type'] ?? '',
       description: map['description'],
       hasReminder: map['hasReminder'] ?? false,
     );

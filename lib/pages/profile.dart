@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 import '../theme/colors.dart';
 import '../data/providers.dart';
-import '../data/user_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -25,11 +23,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadUser() async {
-    final userService = UserService();
     final userProvider = context.read<UserProvider>();
 
     try {
-      final userModel = await userService.fetchCurrentUser();
+      final userModel = await userProvider.fetchUserData();
       if (userModel != null) {
         userProvider.setUser(userModel);
       } else {
@@ -514,7 +511,6 @@ class _ActionsSection extends StatelessWidget {
               Navigator.pop(context);
 
               try {
-                await FirebaseAuth.instance.signOut();
                 if (!context.mounted) return;
                 context.read<UserProvider>().logout();
 

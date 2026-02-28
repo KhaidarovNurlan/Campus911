@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -22,7 +21,6 @@ import 'pages/expenses.dart';
 import 'pages/reviews.dart';
 import 'pages/news.dart';
 import 'pages/profile.dart';
-import 'data/user_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,22 +47,29 @@ class Campus911App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: AppProviders.providers,
-      child: Consumer<ThemeProvider>(
-        builder: (context, themeProvider, child) {
-          return MaterialApp.router(
-            debugShowCheckedModeBanner: false,
-            title: 'Campus911',
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: themeProvider.themeMode,
-            routerConfig: _router,
-            supportedLocales: const [Locale('en', 'US'), Locale('ru', 'RU')],
-            builder: (context, child) {
-              return MediaQuery(
-                data: MediaQuery.of(
-                  context,
-                ).copyWith(textScaler: const TextScaler.linear(1.0)),
-                child: child!,
+      child: Builder(
+        builder: (context) {
+
+          final userProvider = context.read<UserProvider>();
+          final router = _createRouter(userProvider);
+
+          return Consumer<ThemeProvider>(
+            builder: (context, themeProvider, child) {
+              return MaterialApp.router(
+                debugShowCheckedModeBanner: false,
+                routerConfig: router,
+                theme: AppTheme.lightTheme,
+                darkTheme: AppTheme.darkTheme,
+                themeMode: themeProvider.themeMode,
+                supportedLocales: const [Locale('en', 'US'), Locale('ru', 'RU')],
+                builder: (context, child) {
+                  return MediaQuery(
+                    data: MediaQuery.of(
+                      context,
+                    ).copyWith(textScaler: const TextScaler.linear(1.0)),
+                    child: child!,
+                  );
+                },
               );
             },
           );
@@ -74,84 +79,81 @@ class Campus911App extends StatelessWidget {
   }
 }
 
-final GoRouter _router = GoRouter(
-  initialLocation: '/home',
-  debugLogDiagnostics: true,
-  redirect: (context, state) {
-    final bool loggedIn = FirebaseAuth.instance.currentUser != null;
-    final bool loggingIn = state.matchedLocation == '/auth' || state.matchedLocation == '/login';
+GoRouter _createRouter(UserProvider userProvider) {
+  return GoRouter(
+    initialLocation: '/home',
+    refreshListenable: userProvider,
+    redirect: (context, state) {
+      final bool loggedIn = userProvider.isAuthenticated;
+      final bool isAuthRoute = state.matchedLocation == '/auth' ||
+                           state.matchedLocation == '/login';
+      if (!loggedIn && !isAuthRoute) return '/auth';
+      if (loggedIn && isAuthRoute) return '/home';
+      return null;
+    },
+    routes: [
+      GoRoute(
+        path: '/auth',
+        name: 'auth',
+        builder: (context, state) => const AuthScreen(),
+      ),
+      GoRoute(
+        path: '/login',
+        name: 'login',
+        builder: (context, state) => const LoginScreen(),
+      ),
 
-    if (!loggedIn && !loggingIn) return '/auth';
-    if (loggedIn && loggingIn) return '/home';
-    return null;
-  },
-  routes: [
-    GoRoute(
-      path: '/auth',
-      name: 'auth',
-      builder: (context, state) => const AuthScreen(),
-    ),
-    GoRoute(
-      path: '/login',
-      name: 'login',
-      builder: (context, state) => const LoginScreen(),
-    ),
-
-    StatefulShellRoute.indexedStack(
-      builder: (context, state, navigationShell) {
-        final userProvider = context.read<UserProvider>();
-        if (userProvider.user == null && FirebaseAuth.instance.currentUser != null) {
-          UserService().fetchCurrentUser().then((userModel) {
-            if (userModel != null && context.mounted) {
-              userProvider.setUser(userModel);
+      StatefulShellRoute.indexedStack(
+          builder: (context, state, navigationShell) {
+            if (userProvider.isAuthenticated && userProvider.user == null) {
+              userProvider.fetchUserData();
             }
-          });
-        }
-        return HomeScreen(navigationShell: navigationShell);
-      },
-      branches: [
-        StatefulShellBranch(
-          routes: [
-            GoRoute(path: '/home', name: 'home', builder: (_, _) => const HomeTab()),
-          ],
-        ),
-        StatefulShellBranch(
-          routes: [
-            GoRoute(path: '/calendar', name: 'calendar', builder: (_, _) => const CalendarScreen()),
-          ],
-        ),
-        StatefulShellBranch(
-          routes: [
-            GoRoute(path: '/ai', name: 'ai', builder: (_, _) => const AIScreen()),
-          ],
-        ),
-        StatefulShellBranch(
-          routes: [
-            GoRoute(path: '/reviews', name: 'reviews', builder: (_, _) => const ReviewsScreen()),
-          ],
-        ),
-        StatefulShellBranch(
-          routes: [
-            GoRoute(path: '/profile', name: 'profile', builder: (_, _) => const ProfileScreen()),
-          ],
-        ),
-      ],
-    ),
+            return HomeScreen(navigationShell: navigationShell);
+          },
+          branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(path: '/home', name: 'home', builder: (_, _) => const HomeTab()),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(path: '/calendar', name: 'calendar', builder: (_, _) => const CalendarScreen()),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(path: '/ai', name: 'ai', builder: (_, _) => const AIScreen()),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(path: '/reviews', name: 'reviews', builder: (_, _) => const ReviewsScreen()),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(path: '/profile', name: 'profile', builder: (_, _) => const ProfileScreen()),
+            ],
+          ),
+        ],
+      ),
 
-    GoRoute(
-      path: '/schedule',
-      name: 'schedule',
-      builder: (context, state) => const ScheduleScreen(),
-    ),
-    GoRoute(
-      path: '/expenses',
-      name: 'expenses',
-      builder: (_, _) => const ExpensesScreen(),
-    ),
-    GoRoute(
-      path: '/news',
-      name: 'news',
-      builder: (_, _) => const NewsScreen(),
-    ),
-  ],
-);
+      GoRoute(
+        path: '/schedule',
+        name: 'schedule',
+        builder: (context, state) => const ScheduleScreen(),
+      ),
+      GoRoute(
+        path: '/expenses',
+        name: 'expenses',
+        builder: (_, _) => const ExpensesScreen(),
+      ),
+      GoRoute(
+        path: '/news',
+        name: 'news',
+        builder: (_, _) => const NewsScreen(),
+      ),
+    ],
+  );
+}

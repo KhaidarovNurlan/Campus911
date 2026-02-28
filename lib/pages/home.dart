@@ -149,11 +149,6 @@ class _HomeTabState extends State<HomeTab> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.go('/ai'),
-        tooltip: 'AI-friend',
-        child: const Icon(Icons.smart_toy_rounded),
-      ),
     );
   }
 }
@@ -336,7 +331,7 @@ class _TodaySchedule extends StatelessWidget {
     if (lessons.isEmpty) {
       return _EmptyState(
         icon: Icons.calendar_today_rounded,
-        message: AppConstants.emptyScheduleMessage,
+        message: 'Schedule not yet added',
       );
     }
 
@@ -437,7 +432,7 @@ class _NewsPreview extends StatelessWidget {
     if (news.isEmpty) {
       return _EmptyState(
         icon: Icons.newspaper_rounded,
-        message: AppConstants.emptyNewsMessage,
+        message: 'No news yet',
       );
     }
 

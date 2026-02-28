@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 
 import '../theme/custom_button.dart';
 import '../theme/custom_text_field.dart';
-import '../data/user_service.dart';
 import '../data/providers.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -18,50 +16,25 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
   bool _isLoading = false;
 
   Future<void> _login() async {
     setState(() => _isLoading = true);
-    try {
-      final auth = FirebaseAuth.instance;
 
-      final credential = await auth.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
+    try {
+      await context.read<UserProvider>().login(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
       );
 
-      if (credential.user != null) {
-        final userService = UserService();
-        final userModel = await userService.fetchCurrentUser();
-
-        if (userModel != null && mounted) {
-          context.read<UserProvider>().setUser(userModel);
-
-          context.go('/home');
-        } else {
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to load user data'),
-            ),
-          );
-        }
-      }
-    } on FirebaseAuthException catch (e) {
-      String message = 'Login error';
-      if (e.code == 'user-not-found') message = 'Usser not found';
-      if (e.code == 'wrong-password') message = 'Wrong password';
-      if (e.code == 'invalid-email') message = 'Invalid e-mail';
-
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      if (mounted) context.go('/home');
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
