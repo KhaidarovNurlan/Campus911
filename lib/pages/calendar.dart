@@ -457,12 +457,7 @@ class _EmptyEvents extends StatelessWidget {
               color: AppColors.textGrey.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 24),
-            Text(
-              'No events',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyLarge?.copyWith(color: AppColors.textGrey),
-            ),
+            Text('No events yet', style: TextStyle(color: AppColors.textGrey, fontSize: 18)),
             const SizedBox(height: 8),
             Text(
               DateFormat('d MMMM yyyy', 'en_US').format(selectedDate),

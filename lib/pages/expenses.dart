@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -46,10 +45,6 @@ class _ExpensesScreenState extends State<ExpensesScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.go('/home'),
-        ),
         title: const Text('Expense tracker'),
         bottom: TabBar(
           controller: _tabController,
@@ -781,18 +776,7 @@ class _EmptyExpenses extends StatelessWidget {
               color: AppColors.textGrey.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 24),
-            Text(
-              'No expenses',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Start tracking your investments',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: AppColors.textGrey),
-              textAlign: TextAlign.center,
-            ),
+            Text('No expenses yet', style: TextStyle(color: AppColors.textGrey, fontSize: 18)),
           ],
         ),
       ),

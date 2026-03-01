@@ -117,17 +117,17 @@ GoRouter _createRouter(UserProvider userProvider) {
           ),
           StatefulShellBranch(
             routes: [
-              GoRoute(path: '/calendar', name: 'calendar', builder: (_, _) => const CalendarScreen()),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(path: '/ai', name: 'ai', builder: (_, _) => const AIScreen()),
+              GoRoute(path: '/expenses', name: 'expenses', builder: (_, _) => const ExpensesScreen()),
             ],
           ),
           StatefulShellBranch(
             routes: [
               GoRoute(path: '/notes', name: 'notes', builder: (_, _) => const NotesScreen()),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(path: '/calendar', name: 'calendar', builder: (_, _) => const CalendarScreen()),
             ],
           ),
           StatefulShellBranch(
@@ -144,14 +144,14 @@ GoRouter _createRouter(UserProvider userProvider) {
         builder: (context, state) => const ScheduleScreen(),
       ),
       GoRoute(
-        path: '/expenses',
-        name: 'expenses',
-        builder: (_, _) => const ExpensesScreen(),
-      ),
-      GoRoute(
         path: '/news',
         name: 'news',
         builder: (_, _) => const NewsScreen(),
+      ),
+      GoRoute(
+        path: '/ai',
+        name: 'ai',
+        builder: (_, _) => const AIScreen(),
       ),
     ],
   );

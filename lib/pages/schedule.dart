@@ -96,6 +96,7 @@ class _ScheduleScreenState extends State<ScheduleScreen>
       ),
       floatingActionButton: isHeadman
           ? FloatingActionButton.extended(
+              heroTag: 'schedule_add_fab',
               onPressed: () => _showAddLessonDialog(context),
               icon: const Icon(Icons.add_rounded),
               label: const Text('Add'),
