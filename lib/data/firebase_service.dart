@@ -10,13 +10,18 @@ class FirebaseService {
   // ========== AUTHENTICATION ==========
 
   Future<UserModel?> fetchCurrentUser() async {
-    final user = _auth.currentUser;
-    if (user == null) return null;
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return null;
 
-    final doc = await _db.collection('users').doc(user.uid).get();
-    if (!doc.exists) return null;
+      final doc = await _db.collection('users').doc(user.uid).get();
+      if (!doc.exists) return null;
 
-    return UserModel.fromMap(doc.data()!, doc.id);
+      return UserModel.fromMap(doc.data()!, doc.id);
+    } catch (e) {
+      await FirebaseAuth.instance.signOut();
+      return null;
+    }
   }
 
   Future<bool> isHeadmanTaken(String college, String group) async {
@@ -122,17 +127,11 @@ class FirebaseService {
   }
 
   Future<void> addNews(NewsModel news) async {
-    await _db.collection('news').add(news.toMap());
+    await _db.collection('news').doc(news.id).set(news.toMap());
   }
 
   Future<void> deleteNews(String id) async {
     await _db.collection('news').doc(id).delete();
-  }
-
-  // ========== REVIEWS ==========
-
-  Future<void> addReview(ReviewModel review) async {
-    await _db.collection('reviews').add(review.toMap());
   }
 
   // ========== MESSAGES ==========
@@ -206,12 +205,57 @@ class FirebaseService {
         .delete();
   }
 
+  // ========== NOTES ==========
+
+  Future<List<NoteModel>> getNotes(String userId) async {
+    final snapshot = await _db
+        .collection('users')
+        .doc(userId)
+        .collection('notes')
+        .orderBy('createdAt', descending: true)
+        .withConverter<NoteModel>(
+          fromFirestore: (doc, _) => NoteModel.fromMap(doc.data()!, doc.id),
+          toFirestore: (note, _) => note.toMap(),
+        )
+        .get();
+
+    return snapshot.docs.map((doc) => doc.data()).toList();
+  }
+
+  Future<void> addNote(String userId, NoteModel note) async {
+    await _db
+        .collection('users')
+        .doc(userId)
+        .collection('notes')
+        .doc(note.id)
+        .set(note.toMap());
+  }
+
+  Future<void> updateNote(String userId, NoteModel note) async {
+    await _db
+        .collection('users')
+        .doc(userId)
+        .collection('notes')
+        .doc(note.id)
+        .update(note.toMap());
+  }
+
+  Future<void> deleteNote(String userId, String noteId) async {
+    await _db
+        .collection('users')
+        .doc(userId)
+        .collection('notes')
+        .doc(noteId)
+        .delete();
+  }
+
   // ========== EVENTS ==========
 
-  Future<List<EventModel>> getEvents(String college) async {
+  Future<List<EventModel>> getEvents(String userId) async {
     final snapshot = await _db
+        .collection('users')
+        .doc(userId)
         .collection('events')
-        .where('college', isEqualTo: college)
         .withConverter<EventModel>(
           fromFirestore: (doc, _) => EventModel.fromMap(doc.data()!, doc.id),
           toFirestore: (event, _) => event.toMap(),
@@ -221,11 +265,21 @@ class FirebaseService {
     return snapshot.docs.map((doc) => doc.data()).toList();
   }
 
-  Future<void> addEvent(EventModel event) async {
-    await _db.collection('events').doc(event.id).set(event.toMap());
+  Future<void> addEvent(String userId, EventModel event) async {
+    await _db
+        .collection('users')
+        .doc(userId)
+        .collection('events')
+        .doc(event.id.isEmpty ? null : event.id)
+        .set(event.toMap());
   }
 
-  Future<void> deleteEvent(String id) async {
-    await _db.collection('events').doc(id).delete();
+  Future<void> deleteEvent(String userId, String eventId) async {
+    await _db
+        .collection('users')
+        .doc(userId)
+        .collection('events')
+        .doc(eventId)
+        .delete();
   }
 }

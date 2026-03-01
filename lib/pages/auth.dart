@@ -124,16 +124,16 @@ class _OnboardingScreenState extends State<_OnboardingScreen> {
                   _OnboardingPage(
                     emoji: '🤖',
                     title: 'AI-friend nearby',
-                    description: 'A smart bot will help with homework, deadlines, and advice.',
+                    description: 'A smart bot will help with homework, tests, and advice.',
                   ),
                   _OnboardingPage(
                     emoji: '📚',
-                    title: 'Manage your schedule',
+                    title: 'Check the schedule',
                     description: 'The entire schedule in one place. Never miss a substitution again!',
                   ),
                   _OnboardingPage(
-                    emoji: '💬',
-                    title: 'Reviews about teachers',
+                    emoji: '📰',
+                    title: 'Find out the news',
                     description: 'Get to know your teachers before your first lesson with them!',
                   ),
                 ],

@@ -165,103 +165,6 @@ class NewsModel {
   }
 }
 
-class TeacherModel {
-  final String id;
-  final String name;
-  final String subject;
-  final double rating;
-  final int reviewCount;
-
-  TeacherModel({
-    required this.id,
-    required this.name,
-    required this.subject,
-    required this.rating,
-    required this.reviewCount,
-  });
-
-  factory TeacherModel.fromMap(Map<String, dynamic> map, String id) {
-    return TeacherModel(
-      id: map['id'] ?? '',
-      name: map['name'] ?? '',
-      subject: map['subject'] ?? '',
-      rating: (map['rating'] ?? 0).toDouble(),
-      reviewCount: (map['reviewCount'] ?? 0).toInt(),
-    );
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'name': name,
-      'subject': subject,
-      'rating': rating,
-      'reviewCount': reviewCount,
-    };
-  }
-
-  TeacherModel copyWith({
-    String? id,
-    String? name,
-    String? subject,
-    double? rating,
-    int? reviewCount,
-  }) {
-    return TeacherModel(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      subject: subject ?? this.subject,
-      rating: rating ?? this.rating,
-      reviewCount: reviewCount ?? this.reviewCount,
-    );
-  }
-}
-
-class ReviewModel {
-  final String id;
-  final String teacherId;
-  final String studentName;
-  final double rating;
-  final String comment;
-  final DateTime date;
-  final bool isAnonymous;
-
-  ReviewModel({
-    required this.id,
-    required this.teacherId,
-    required this.studentName,
-    required this.rating,
-    required this.comment,
-    required this.date,
-    this.isAnonymous = false,
-  });
-
-  String get displayName => isAnonymous ? 'Anonymous' : studentName;
-
-  factory ReviewModel.fromMap(Map<String, dynamic> map, String id) {
-    return ReviewModel(
-      id: id,
-      teacherId: map['teacherId'] ?? '',
-      studentName: map['studentName'] ?? '',
-      rating: (map['rating'] ?? 0).toDouble(),
-      comment: map['comment'] ?? '',
-      date: (map['date'] as Timestamp).toDate(),
-      isAnonymous: map['isAnonymous'] ?? false,
-    );
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'teacherId': teacherId,
-      'studentName': studentName,
-      'rating': rating,
-      'comment': comment,
-      'date': Timestamp.fromDate(date),
-      'isAnonymous': isAnonymous,
-    };
-  }
-}
-
 class MessageModel {
   final String id;
   final String text;
@@ -328,11 +231,41 @@ class ExpenseModel {
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
       'amount': amount,
       'category': category,
       'date': Timestamp.fromDate(date),
       'note': note,
+    };
+  }
+}
+
+class NoteModel {
+  final String id;
+  final String title;
+  final String? content;
+  final DateTime createdAt;
+
+  NoteModel({
+    required this.id,
+    required this.title,
+    this.content,
+    required this.createdAt,
+  });
+
+  factory NoteModel.fromMap(Map<String, dynamic> map, String id) {
+    return NoteModel(
+      id: id,
+      title: map['title'] ?? '',
+      content: map['content'],
+      createdAt: (map['createdAt'] as Timestamp).toDate(),
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'title': title,
+      'content': content,
+      'createdAt': Timestamp.fromDate(createdAt),
     };
   }
 }
@@ -343,7 +276,6 @@ class EventModel {
   final DateTime date;
   final String type;
   final String? description;
-  final bool hasReminder;
 
   EventModel({
     required this.id,
@@ -351,7 +283,6 @@ class EventModel {
     required this.date,
     required this.type,
     this.description,
-    this.hasReminder = false,
   });
 
   String get typeEmoji {
@@ -371,7 +302,6 @@ class EventModel {
       date: (map['date'] as Timestamp).toDate(),
       type: map['type'] ?? '',
       description: map['description'],
-      hasReminder: map['hasReminder'] ?? false,
     );
   }
 
@@ -381,7 +311,6 @@ class EventModel {
       'date': Timestamp.fromDate(date),
       'type': type,
       'description': description,
-      'hasReminder': hasReminder,
     };
   }
 }

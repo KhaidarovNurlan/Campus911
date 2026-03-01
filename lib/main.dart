@@ -18,7 +18,7 @@ import 'pages/schedule.dart';
 import 'pages/ai_friend.dart';
 import 'pages/calendar.dart';
 import 'pages/expenses.dart';
-import 'pages/reviews.dart';
+import 'pages/notes.dart';
 import 'pages/news.dart';
 import 'pages/profile.dart';
 
@@ -85,9 +85,8 @@ GoRouter _createRouter(UserProvider userProvider) {
     refreshListenable: userProvider,
     redirect: (context, state) {
       final bool loggedIn = userProvider.isAuthenticated;
-      final bool isAuthRoute = state.matchedLocation == '/auth' ||
-                           state.matchedLocation == '/login';
-      if (!loggedIn && !isAuthRoute) return '/auth';
+      final bool isAuthRoute = state.matchedLocation == '/auth' || state.matchedLocation == '/login';
+      if (!loggedIn) return isAuthRoute ? null : '/auth';
       if (loggedIn && isAuthRoute) return '/home';
       return null;
     },
@@ -128,7 +127,7 @@ GoRouter _createRouter(UserProvider userProvider) {
           ),
           StatefulShellBranch(
             routes: [
-              GoRoute(path: '/reviews', name: 'reviews', builder: (_, _) => const ReviewsScreen()),
+              GoRoute(path: '/notes', name: 'notes', builder: (_, _) => const NotesScreen()),
             ],
           ),
           StatefulShellBranch(

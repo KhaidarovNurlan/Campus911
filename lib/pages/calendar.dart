@@ -27,6 +27,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
   void initState() {
     super.initState();
     _selectedDay = _focusedDay;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userId = context.read<UserProvider>().user?.id ?? '';
+      if (userId.isNotEmpty) {
+        context.read<CalendarProvider>().loadEvents(userId);
+      }
+    });
   }
 
   @override
@@ -330,12 +337,6 @@ class _EventCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        if (event.hasReminder)
-                          const Icon(
-                            Icons.notifications_active_rounded,
-                            color: AppColors.warning,
-                            size: 20,
-                          ),
                       ],
                     ),
                     if (event.description != null) ...[
@@ -417,7 +418,8 @@ class _EventCard extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
-              context.read<CalendarProvider>().deleteEvent(event.id);
+              final userId = context.read<UserProvider>().user?.id ?? '';
+              context.read<CalendarProvider>().deleteEvent(userId, event.id);
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -552,15 +554,6 @@ class _EventDetailsSheet extends StatelessWidget {
               value: event.description!,
             ),
           ],
-
-          const SizedBox(height: 12),
-          _InfoRow(
-            icon: event.hasReminder
-                ? Icons.notifications_active_rounded
-                : Icons.notifications_off_rounded,
-            label: 'Reminder',
-            value: event.hasReminder ? 'On' : 'Off',
-          ),
         ],
       ),
     );
@@ -641,7 +634,6 @@ class _AddEventBottomSheetState extends State<_AddEventBottomSheet> {
 
   String _selectedType = 'personal';
   TimeOfDay _selectedTime = TimeOfDay.now();
-  bool _hasReminder = true;
 
   @override
   void dispose() {
@@ -789,21 +781,6 @@ class _AddEventBottomSheetState extends State<_AddEventBottomSheet> {
               ),
               const SizedBox(height: 16),
 
-              SwitchListTile(
-                value: _hasReminder,
-                onChanged: (value) => setState(() => _hasReminder = value),
-                title: const Text('Reminder'),
-                subtitle: Text(
-                  _hasReminder ? '1 hour before the event' : 'Off',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: AppColors.textGrey),
-                ),
-                activeThumbColor: AppColors.primary,
-                contentPadding: EdgeInsets.zero,
-              ),
-              const SizedBox(height: 24),
-
               CustomButton(
                 text: 'Add',
                 onPressed: _saveEvent,
@@ -818,6 +795,9 @@ class _AddEventBottomSheetState extends State<_AddEventBottomSheet> {
 
   void _saveEvent() {
     if (!_formKey.currentState!.validate()) return;
+
+    final userProvider = context.read<UserProvider>();
+    final userId = userProvider.user?.id ?? '';
 
     final eventDate = DateTime(
       widget.selectedDate.year,
@@ -835,10 +815,9 @@ class _AddEventBottomSheetState extends State<_AddEventBottomSheet> {
       description: _descriptionController.text.isEmpty
           ? null
           : _descriptionController.text,
-      hasReminder: _hasReminder,
     );
 
-    context.read<CalendarProvider>().addEvent(event);
+    context.read<CalendarProvider>().addEvent(userId, event);
 
     Navigator.pop(context);
 

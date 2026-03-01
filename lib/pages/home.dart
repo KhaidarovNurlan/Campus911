@@ -29,7 +29,7 @@ class HomeScreen extends StatelessWidget {
           BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.calendar_month_rounded), label: 'Calendar'),
           BottomNavigationBarItem(icon: Icon(Icons.smart_toy_rounded), label: 'AI-friend'),
-          BottomNavigationBarItem(icon: Icon(Icons.reviews_rounded), label: 'Reviews'),
+          BottomNavigationBarItem(icon: Icon(Icons.note_rounded), label: 'Notes'),
           BottomNavigationBarItem(icon: Icon(Icons.person_rounded), label: 'Profile'),
         ],
       ),

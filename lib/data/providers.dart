@@ -186,59 +186,6 @@ class NewsProvider extends ChangeNotifier {
   }
 }
 
-class ReviewProvider extends ChangeNotifier {
-  final _firebase = FirebaseService();
-  final List<TeacherModel> _teachers = [
-    TeacherModel(
-      id: '1',
-      name: 'Арсен Тимурович',
-      subject: 'Мобилка',
-      rating: 5,
-      reviewCount: 0,
-    ),
-    TeacherModel(
-      id: '2',
-      name: 'Мистер Синтиков',
-      subject: 'Ардуино',
-      rating: 5,
-      reviewCount: 0,
-    ),
-    TeacherModel(
-      id: '3',
-      name: 'Алмас Айдарович',
-      subject: 'Джава',
-      rating: 5,
-      reviewCount: 0,
-    ),
-  ];
-  final Map<String, List<ReviewModel>> _reviews = {};
-
-  List<TeacherModel> get teachers => _teachers;
-
-  List<ReviewModel> getReviewsForTeacher(String teacherId) {
-    return _reviews[teacherId] ?? [];
-  }
-
-  Future<void> addReview(ReviewModel review) async {
-    await _firebase.addReview(review);
-
-    _reviews.putIfAbsent(review.teacherId, () => []).insert(0, review);
-    final teacherIndex = _teachers.indexWhere((t) => t.id == review.teacherId);
-    if (teacherIndex != -1) {
-      final allReviews = _reviews[review.teacherId]!;
-      final avgRating =
-          allReviews.fold<double>(0, (sum, r) => sum + r.rating) /
-          allReviews.length;
-      _teachers[teacherIndex] = _teachers[teacherIndex].copyWith(
-        rating: avgRating,
-        reviewCount: allReviews.length,
-      );
-    }
-
-    notifyListeners();
-  }
-}
-
 class ChatProvider extends ChangeNotifier {
   final _firebase = FirebaseService();
   final List<MessageModel> _messages = [];
@@ -354,6 +301,41 @@ class ExpenseProvider with ChangeNotifier {
   }
 }
 
+class NotesProvider extends ChangeNotifier {
+  final _firebase = FirebaseService();
+  final List<NoteModel> _notes = [];
+
+  List<NoteModel> get notes => _notes;
+
+  Future<void> loadNotes(String userId) async {
+    final fetchedNotes = await _firebase.getNotes(userId);
+    _notes.clear();
+    _notes.addAll(fetchedNotes);
+    notifyListeners();
+  }
+
+  Future<void> addNote(String userId, NoteModel note) async {
+    await _firebase.addNote(userId, note);
+    _notes.insert(0, note);
+    notifyListeners();
+  }
+
+  Future<void> updateNote(String userId, NoteModel updatedNote) async {
+    await _firebase.updateNote(userId, updatedNote);
+    final index = _notes.indexWhere((n) => n.id == updatedNote.id);
+    if (index != -1) {
+      _notes[index] = updatedNote;
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteNote(String userId, String noteId) async {
+    await _firebase.deleteNote(userId, noteId);
+    _notes.removeWhere((n) => n.id == noteId);
+    notifyListeners();
+  }
+}
+
 class CalendarProvider extends ChangeNotifier {
   final _firebase = FirebaseService();
   final List<EventModel> _events = [];
@@ -375,14 +357,14 @@ class CalendarProvider extends ChangeNotifier {
     }).toList();
   }
 
-  Future<void> addEvent(EventModel event) async {
-    await _firebase.addEvent(event);
+  Future<void> addEvent(String userId, EventModel event) async {
+    await _firebase.addEvent(userId, event);
     _events.add(event);
     notifyListeners();
   }
 
-  Future<void> deleteEvent(String id) async {
-    await _firebase.deleteEvent(id);
+  Future<void> deleteEvent(String userId, String id) async {
+    await _firebase.deleteEvent(userId, id);
     _events.removeWhere((e) => e.id == id);
     notifyListeners();
   }
@@ -394,9 +376,9 @@ class AppProviders {
     ChangeNotifierProvider<UserProvider>(create: (_) => UserProvider()),
     ChangeNotifierProvider<ScheduleProvider>(create: (_) => ScheduleProvider()),
     ChangeNotifierProvider<NewsProvider>(create: (_) => NewsProvider()),
-    ChangeNotifierProvider<ReviewProvider>(create: (_) => ReviewProvider()),
     ChangeNotifierProvider<ChatProvider>(create: (_) => ChatProvider()),
     ChangeNotifierProvider<ExpenseProvider>(create: (_) => ExpenseProvider()),
+    ChangeNotifierProvider<NotesProvider>(create: (_) => NotesProvider()),
     ChangeNotifierProvider<CalendarProvider>(create: (_) => CalendarProvider()),
   ];
 }
