@@ -159,7 +159,7 @@ class _LessonCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         child: Container(
           decoration: BoxDecoration(
-            color: isDark ? AppColors.darkSurface : AppColors.white,
+            color: isDark ? AppColors.darkSurface : AppColors.textLight,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: _getLessonColor(lesson.type).withValues(alpha: 0.3),
@@ -413,7 +413,7 @@ class _AddLessonBottomSheetState extends State<_AddLessonBottomSheet> {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.white,
+        color: isDark ? AppColors.darkSurface : AppColors.textLight,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: EdgeInsets.only(
@@ -644,7 +644,7 @@ class _TypeChip extends StatelessWidget {
       selectedColor: AppColors.primary.withValues(alpha: 0.2),
       backgroundColor: Theme.of(context).brightness == Brightness.dark
           ? AppColors.darkSurface
-          : AppColors.white,
+          : AppColors.textLight,
       labelStyle: TextStyle(
         color: isSelected ? AppColors.primary : AppColors.textGrey,
         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
@@ -695,7 +695,7 @@ class _TimeSelector extends StatelessWidget {
                     timePickerTheme: TimePickerThemeData(
                       backgroundColor: isDark
                           ? AppColors.darkSurface
-                          : AppColors.white,
+                          : AppColors.textLight,
                     ),
                   ),
                   child: child!,
@@ -710,7 +710,7 @@ class _TimeSelector extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurface : AppColors.background,
+              color: isDark ? AppColors.darkSurface : AppColors.darkBackground,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: AppColors.textGrey.withValues(alpha: 0.3),
@@ -747,7 +747,7 @@ class _LessonOptionsSheet extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.white,
+        color: isDark ? AppColors.darkSurface : AppColors.textLight,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.all(24),

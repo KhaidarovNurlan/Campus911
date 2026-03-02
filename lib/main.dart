@@ -43,33 +43,27 @@ void main() async {
 
 class Campus911App extends StatelessWidget {
   const Campus911App({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: AppProviders.providers,
       child: Builder(
         builder: (context) {
-
           final userProvider = context.read<UserProvider>();
           final router = _createRouter(userProvider);
-
-          return Consumer<ThemeProvider>(
-            builder: (context, themeProvider, child) {
-              return MaterialApp.router(
-                debugShowCheckedModeBanner: false,
-                routerConfig: router,
-                theme: AppTheme.lightTheme,
-                darkTheme: AppTheme.darkTheme,
-                themeMode: themeProvider.themeMode,
-                supportedLocales: const [Locale('en', 'US'), Locale('ru', 'RU')],
-                builder: (context, child) {
-                  return MediaQuery(
-                    data: MediaQuery.of(
-                      context,
-                    ).copyWith(textScaler: const TextScaler.linear(1.0)),
-                    child: child!,
-                  );
-                },
+          return MaterialApp.router(
+            debugShowCheckedModeBanner: false,
+            routerConfig: router,
+            theme: AppTheme.darkTheme,
+            themeMode: ThemeMode.dark,
+            supportedLocales: const [Locale('en', 'US'), Locale('ru', 'RU')],
+            builder: (context, child) {
+              return MediaQuery(
+                data: MediaQuery.of(context).copyWith(
+                  textScaler: const TextScaler.linear(1.0),
+                ),
+                child: child!,
               );
             },
           );

@@ -81,21 +81,6 @@ class _HomeTabState extends State<HomeTab> {
     final today = AppConstants.weekDays[todayIndex > 6 ? 0 : todayIndex - 1];
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Campus911'),
-        actions: [
-          IconButton(
-            icon: Icon(
-              Theme.of(context).brightness == Brightness.dark
-                  ? Icons.light_mode_rounded
-                  : Icons.dark_mode_rounded,
-            ),
-            onPressed: () {
-              context.read<ThemeProvider>().toggleTheme();
-            },
-          ),
-        ],
-      ),
       body: RefreshIndicator(
         onRefresh: _fetchData,
         child: SingleChildScrollView(
@@ -104,6 +89,7 @@ class _HomeTabState extends State<HomeTab> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const SizedBox(height: 48),
               _isLoading
                   ? _ShimmerBox(width: 200, height: 32)
                   : Text(
@@ -154,10 +140,9 @@ class _QuickActionsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Настраиваем сетку: 3 колонки для расположения в один ряд
     const gridDelegate = SliverGridDelegateWithFixedCrossAxisCount(
-      crossAxisCount: 3,          // Три элемента в ряд
-      childAspectRatio: 0.85,     // Изменяем соотношение (высота чуть больше ширины)
+      crossAxisCount: 3,
+      childAspectRatio: 0.85,
       crossAxisSpacing: 10,
       mainAxisSpacing: 10,
     );
@@ -167,7 +152,7 @@ class _QuickActionsGrid extends StatelessWidget {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         gridDelegate: gridDelegate,
-        itemCount: 3, // Показываем 3 шиммера
+        itemCount: 3,
         itemBuilder: (context, index) =>
             const _ShimmerBox(width: double.infinity, height: double.infinity),
       );
@@ -227,7 +212,7 @@ class _QuickAction extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.darkSurface : AppColors.white,
+          color: isDark ? AppColors.darkSurface : AppColors.textLight,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -344,7 +329,7 @@ class _LessonCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.white,
+        color: isDark ? AppColors.darkSurface : AppColors.textLight,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: AppColors.primary.withValues(alpha: 0.3),
@@ -448,7 +433,7 @@ class _NewsCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.darkSurface : AppColors.white,
+          color: isDark ? AppColors.darkSurface : AppColors.textLight,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(

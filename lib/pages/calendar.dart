@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
@@ -45,15 +44,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.go('/home'),
-        ),
-        title: const Text('Calendar'),
+        title: const Text('Event Calendar', style: TextStyle(fontWeight: FontWeight.bold)),
+        centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.today_rounded),
-            tooltip: 'Today',
+            icon: const Icon(Icons.today_rounded, color: AppColors.primary),
             onPressed: () {
               setState(() {
                 _focusedDay = DateTime.now();
@@ -61,32 +56,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
               });
             },
           ),
-          PopupMenuButton<CalendarFormat>(
-            icon: const Icon(Icons.view_module_rounded),
-            tooltip: 'View',
-            onSelected: (format) {
-              setState(() => _calendarFormat = format);
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: CalendarFormat.month,
-                child: Text('Month'),
-              ),
-              const PopupMenuItem(
-                value: CalendarFormat.twoWeeks,
-                child: Text('Half a month'),
-              ),
-              const PopupMenuItem(
-                value: CalendarFormat.week,
-                child: Text('Week'),
-              ),
-            ],
-          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: Column(
         children: [
-          _CustomCalendar(
+          _CalendarCard(
             focusedDay: _focusedDay,
             selectedDay: _selectedDay,
             calendarFormat: _calendarFormat,
@@ -97,23 +72,27 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 _focusedDay = focusedDay;
               });
             },
-            onFormatChanged: (format) {
-              setState(() => _calendarFormat = format);
-            },
-            onPageChanged: (focusedDay) {
-              setState(() => _focusedDay = focusedDay);
-            },
+            onFormatChanged: (format) => setState(() => _calendarFormat = format),
+            onPageChanged: (focusedDay) => _focusedDay = focusedDay,
           ),
 
-          const Divider(height: 1),
-
           Expanded(
-            child: selectedEvents.isEmpty
-                ? _EmptyEvents(selectedDate: _selectedDay!)
-                : _EventsList(
-                    events: selectedEvents,
-                    selectedDate: _selectedDay!,
-                  ),
+            child: Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(top: 20),
+              decoration: BoxDecoration(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.darkBackground
+                    : Colors.grey[50],
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+              ),
+              child: selectedEvents.isEmpty
+                  ? _EmptyEvents(selectedDate: _selectedDay!)
+                  : _EventsList(
+                      events: selectedEvents,
+                      selectedDate: _selectedDay!,
+                    ),
+            ),
           ),
         ],
       ),
@@ -135,7 +114,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 }
 
-class _CustomCalendar extends StatelessWidget {
+class _CalendarCard extends StatelessWidget {
   final DateTime focusedDay;
   final DateTime? selectedDay;
   final CalendarFormat calendarFormat;
@@ -144,7 +123,7 @@ class _CustomCalendar extends StatelessWidget {
   final Function(CalendarFormat) onFormatChanged;
   final Function(DateTime) onPageChanged;
 
-  const _CustomCalendar({
+  const _CalendarCard({
     required this.focusedDay,
     required this.selectedDay,
     required this.calendarFormat,
@@ -159,8 +138,19 @@ class _CustomCalendar extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.white,
+        color: isDark ? AppColors.darkSurface : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.05)),
       ),
       child: TableCalendar(
         firstDay: DateTime.utc(2020, 1, 1),
@@ -169,13 +159,25 @@ class _CustomCalendar extends StatelessWidget {
         selectedDayPredicate: (day) => isSameDay(selectedDay, day),
         calendarFormat: calendarFormat,
         startingDayOfWeek: StartingDayOfWeek.monday,
-        locale: 'en_US',
-
+        rowHeight: 45,
+        headerStyle: HeaderStyle(
+          formatButtonVisible: true,
+          formatButtonShowsNext: false,
+          formatButtonDecoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          titleCentered: true,
+          titleTextStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          leftChevronIcon: const Icon(Icons.chevron_left_rounded, color: AppColors.primary),
+          rightChevronIcon: const Icon(Icons.chevron_right_rounded, color: AppColors.primary),
+        ),
         calendarStyle: CalendarStyle(
           todayDecoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.3),
+            color: AppColors.primary.withValues(alpha: 0.15),
             shape: BoxShape.circle,
           ),
+          todayTextStyle: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
           selectedDecoration: const BoxDecoration(
             color: AppColors.primary,
             shape: BoxShape.circle,
@@ -185,55 +187,12 @@ class _CustomCalendar extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           markersMaxCount: 1,
-          todayTextStyle: const TextStyle(
-            color: AppColors.primary,
-            fontWeight: FontWeight.bold,
-          ),
-          selectedTextStyle: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-          weekendTextStyle: TextStyle(
-            color: AppColors.error.withValues(alpha: 0.7),
-          ),
           outsideDaysVisible: false,
+          weekendTextStyle: const TextStyle(color: AppColors.error),
         ),
-
-        headerStyle: HeaderStyle(
-          formatButtonVisible: false,
-          titleCentered: true,
-          titleTextStyle: Theme.of(
-            context,
-          ).textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.bold),
-          leftChevronIcon: const Icon(
-            Icons.chevron_left_rounded,
-            color: AppColors.primary,
-          ),
-          rightChevronIcon: const Icon(
-            Icons.chevron_right_rounded,
-            color: AppColors.primary,
-          ),
-        ),
-
-        daysOfWeekStyle: DaysOfWeekStyle(
-          weekdayStyle: Theme.of(context).textTheme.bodySmall!.copyWith(
-            fontWeight: FontWeight.w600,
-            color: AppColors.textGrey,
-          ),
-          weekendStyle: Theme.of(context).textTheme.bodySmall!.copyWith(
-            fontWeight: FontWeight.w600,
-            color: AppColors.error.withValues(alpha: 0.7),
-          ),
-        ),
-
         eventLoader: (day) {
-          return events.where((event) {
-            return event.date.year == day.year &&
-                event.date.month == day.month &&
-                event.date.day == day.day;
-          }).toList();
+          return events.where((e) => isSameDay(e.date, day)).toList();
         },
-
         onDaySelected: onDaySelected,
         onFormatChanged: onFormatChanged,
         onPageChanged: onPageChanged,
@@ -250,190 +209,103 @@ class _EventsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(
-            DateFormat('d MMMM yyyy', 'en_US').format(selectedDate),
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-        ),
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: events.length,
-            itemBuilder: (context, index) {
-              return _EventCard(event: events[index]);
-            },
-          ),
-        ),
-      ],
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
+      itemCount: events.length + 1,
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 20),
+            child: Text(
+              DateFormat('EEEE, d MMMM').format(selectedDate),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textGrey),
+            ),
+          );
+        }
+        return _EventCard(event: events[index - 1]);
+      },
     );
   }
 }
 
 class _EventCard extends StatelessWidget {
   final EventModel event;
-
   const _EventCard({required this.event});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final color = _getEventColor(event.type);
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () => _showEventDetails(context),
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.darkSurface : AppColors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: _getEventColor(event.type).withValues(alpha: 0.3),
-              width: 1,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ]
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(14),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            child: Text(event.typeEmoji, style: const TextStyle(fontSize: 24)),
           ),
-          child: Row(
-            children: [
-              Container(
-                width: 4,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: _getEventColor(event.type),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(width: 16),
-
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(event.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const SizedBox(height: 4),
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Text(
-                          event.typeEmoji,
-                          style: const TextStyle(fontSize: 24),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            event.title,
-                            style: Theme.of(context).textTheme.bodyLarge
-                                ?.copyWith(fontWeight: FontWeight.bold),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (event.description != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        event.description!,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textGrey,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.access_time_rounded,
-                          size: 14,
-                          color: AppColors.textGrey,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          DateFormat('HH:mm').format(event.date),
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: AppColors.textGrey),
-                        ),
-                      ],
+                    const Icon(Icons.access_time_rounded, size: 14, color: AppColors.textGrey),
+                    const SizedBox(width: 4),
+                    Text(
+                      DateFormat('HH:mm').format(event.date),
+                      style: const TextStyle(color: AppColors.textGrey, fontSize: 13),
                     ),
                   ],
                 ),
-              ),
-
-              IconButton(
-                icon: const Icon(Icons.delete_outline_rounded),
-                color: AppColors.error,
-                onPressed: () => _showDeleteConfirmation(context),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          IconButton(
+            icon: const Icon(Icons.more_vert_rounded, color: AppColors.textGrey),
+            onPressed: () => _showEventDetails(context),
+          ),
+        ],
       ),
     );
   }
 
   Color _getEventColor(String type) {
     switch (type) {
-      case 'academic':
-        return AppColors.academic;
-      case 'deadline':
-        return AppColors.deadline;
-      case 'personal':
-        return AppColors.personal;
-      case 'news':
-        return AppColors.news;
-      default:
-        return AppColors.textGrey;
+      case 'academic': return AppColors.books;
+      case 'deadline': return AppColors.health;
+      case 'personal': return AppColors.communication;
+      case 'news': return AppColors.entertainment;
+      default: return AppColors.primary;
     }
   }
 
   void _showEventDetails(BuildContext context) {
-    showModalBottomSheet(
+     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => _EventDetailsSheet(event: event),
-    );
-  }
-
-  void _showDeleteConfirmation(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete event?'),
-        content: Text('Are you sure you want to delete "${event.title}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final userId = context.read<UserProvider>().user?.id ?? '';
-              context.read<CalendarProvider>().deleteEvent(userId, event.id);
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('🗑️ ${event.title} deleted'),
-                  backgroundColor: AppColors.error,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -483,7 +355,7 @@ class _EventDetailsSheet extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.white,
+        color: isDark ? AppColors.darkSurface : AppColors.textLight,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.all(24),
@@ -643,7 +515,7 @@ class _AddEventBottomSheetState extends State<_AddEventBottomSheet> {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.white,
+        color: isDark ? AppColors.darkSurface : AppColors.textLight,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: EdgeInsets.only(
@@ -750,7 +622,7 @@ class _AddEventBottomSheetState extends State<_AddEventBottomSheet> {
                     selectedColor: AppColors.primary.withValues(alpha: 0.2),
                     backgroundColor: isDark
                         ? AppColors.darkSurface
-                        : AppColors.white,
+                        : AppColors.textLight,
                     labelStyle: TextStyle(
                       color: isSelected
                           ? AppColors.primary
@@ -863,7 +735,7 @@ class _TimeSelector extends StatelessWidget {
                     timePickerTheme: TimePickerThemeData(
                       backgroundColor: isDark
                           ? AppColors.darkSurface
-                          : AppColors.white,
+                          : AppColors.textLight,
                     ),
                   ),
                   child: child!,
@@ -878,7 +750,7 @@ class _TimeSelector extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurface : AppColors.background,
+              color: isDark ? AppColors.darkSurface : AppColors.darkBackground,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: AppColors.textGrey.withValues(alpha: 0.3),

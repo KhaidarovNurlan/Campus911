@@ -41,7 +41,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
     final userProvider = context.watch<UserProvider>();
     final user = userProvider.user;
 
@@ -65,22 +64,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.go('/home'),
-        ),
-        title: const Text('Profile'),
+        title: const Text('My Profile'),
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
             _ProfileHeader(user: user),
             _ProfileInfo(user: user),
-            const SizedBox(height: 16),
-            _SettingsSection(
-              isDarkMode: themeProvider.isDarkMode,
-              onThemeToggle: () => themeProvider.toggleTheme(),
-            ),
             const SizedBox(height: 16),
             _ActionsSection(),
             const SizedBox(height: 32),
@@ -98,83 +88,80 @@ class _ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
-      padding: const EdgeInsets.all(24),
+      width: double.infinity,
+      padding: const EdgeInsets.only(top: 40, bottom: 32),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.primary, Color(0xFF00A844)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+        gradient: LinearGradient(
+          colors: [
+            theme.scaffoldBackgroundColor,
+            isDark ? AppColors.darkSurface : Colors.white,
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
       ),
       child: Column(
         children: [
           Container(
-            width: 100,
-            height: 100,
+            width: 120,
+            height: 120,
             decoration: BoxDecoration(
-              color: Colors.white,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  blurRadius: 15,
-                  offset: const Offset(0, 5),
+                  color: AppColors.primary.withValues(alpha: isDark ? 0.15 : 0.1),
+                  blurRadius: 30,
+                  spreadRadius: 5,
                 ),
               ],
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.2),
+                width: 2,
+              ),
+              color: isDark ? AppColors.darkSurfaceVariant : Colors.grey[100],
             ),
             child: Center(
               child: Text(
-                user.name.split(' ').first[0] + user.name.split(' ')[1][0],
-                style: const TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 40,
+                _getInitials(user.name),
+                style: TextStyle(
+                  color: isDark ? AppColors.primaryDark : AppColors.primary,
+                  fontSize: 48,
                   fontWeight: FontWeight.bold,
+                  letterSpacing: -1,
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 16),
-
-          Text(
-            user.name,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 20),
 
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
+              color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.2),
+              ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  user.isHeadman ? Icons.star_rounded : Icons.school_rounded,
-                  color: Colors.white,
-                  size: 16,
+                  user.isHeadman ? Icons.stars_rounded : Icons.school_rounded,
+                  color: isDark ? AppColors.primaryDark : AppColors.primary,
+                  size: 18,
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 8),
                 Text(
-                  user.isHeadman ? 'Headman' : 'Student',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  user.isHeadman ? '${user.groupName} Headman' : '${user.groupName} Student',
+                  style: TextStyle(
+                    color: isDark ? AppColors.primaryDark : AppColors.primary,
                     fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
@@ -183,6 +170,18 @@ class _ProfileHeader extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _getInitials(String name) {
+    try {
+      final parts = name.trim().split(RegExp(r'\s+'));
+      if (parts.length >= 2) {
+        return (parts[0][0] + parts[1][0]).toUpperCase();
+      }
+      return parts[0][0].toUpperCase();
+    } catch (_) {
+      return '?';
+    }
   }
 }
 
@@ -199,7 +198,7 @@ class _ProfileInfo extends StatelessWidget {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.white,
+        color: isDark ? AppColors.darkSurface : AppColors.textLight,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -219,7 +218,7 @@ class _ProfileInfo extends StatelessWidget {
           const SizedBox(height: 16),
           _InfoRow(
             icon: Icons.email_rounded,
-            label: 'Email',
+            label: 'E-mail',
             value: user.email,
           ),
           const Divider(height: 24),
@@ -289,68 +288,6 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
-class _SettingsSection extends StatelessWidget {
-  final bool isDarkMode;
-  final VoidCallback onThemeToggle;
-
-  const _SettingsSection({
-    required this.isDarkMode,
-    required this.onThemeToggle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Settings', style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: 16),
-          SwitchListTile(
-            value: isDarkMode,
-            onChanged: (value) => onThemeToggle(),
-            title: const Text('Dark theme'),
-            subtitle: Text(
-              isDarkMode ? 'On' : 'Off',
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: AppColors.textGrey),
-            ),
-            secondary: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                isDarkMode ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-                color: AppColors.primary,
-              ),
-            ),
-            activeThumbColor: AppColors.primary,
-            contentPadding: EdgeInsets.zero,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _ActionsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -360,7 +297,7 @@ class _ActionsSection extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.white,
+        color: isDark ? AppColors.darkSurface : AppColors.textLight,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(

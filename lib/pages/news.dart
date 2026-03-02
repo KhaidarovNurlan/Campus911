@@ -134,7 +134,7 @@ class _NewsCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         child: Container(
           decoration: BoxDecoration(
-            color: isDark ? AppColors.darkSurface : AppColors.white,
+            color: isDark ? AppColors.darkSurface : AppColors.textLight,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
@@ -301,7 +301,7 @@ class _NewsDetailsSheet extends StatelessWidget {
       builder: (context, scrollController) {
         return Container(
           decoration: BoxDecoration(
-            color: isDark ? AppColors.darkSurface : AppColors.white,
+            color: isDark ? AppColors.darkSurface : AppColors.textLight,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
@@ -475,7 +475,7 @@ class _AddNewsBottomSheetState extends State<_AddNewsBottomSheet> {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.white,
+        color: isDark ? AppColors.darkSurface : AppColors.textLight,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: EdgeInsets.only(
@@ -569,7 +569,7 @@ class _AddNewsBottomSheetState extends State<_AddNewsBottomSheet> {
                     selectedColor: AppColors.primary.withValues(alpha: 0.2),
                     backgroundColor: isDark
                         ? AppColors.darkSurface
-                        : AppColors.white,
+                        : AppColors.textLight,
                     labelStyle: TextStyle(
                       color: isSelected
                           ? AppColors.primary

@@ -34,7 +34,7 @@ class _NotesScreenState extends State<NotesScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Notes'),
+        title: const Text('Important Notes'),
       ),
       body: notes.isEmpty
           ? _EmptyNotes()
@@ -45,10 +45,10 @@ class _NotesScreenState extends State<NotesScreen> {
                 return _NoteCard(note: notes[index]);
               },
             ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showNoteDialog(context),
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add_rounded, color: Colors.white, size: 30),
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('Add'),
       ),
     );
   }
@@ -77,7 +77,7 @@ class _NoteCard extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12),
       child: Container(
         decoration: BoxDecoration(
-          color: isDark ? AppColors.darkSurface : AppColors.white,
+          color: isDark ? AppColors.darkSurface : AppColors.textLight,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -174,7 +174,7 @@ class _NoteEditorSheetState extends State<_NoteEditorSheet> {
         top: 24, left: 24, right: 24,
       ),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.white,
+        color: isDark ? AppColors.darkSurface : AppColors.textLight,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Form(

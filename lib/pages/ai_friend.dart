@@ -234,7 +234,7 @@ class _AIMessageBubble extends StatelessWidget {
                             ? AppColors.primary
                             : (isDark
                                   ? AppColors.darkSurface
-                                  : AppColors.background),
+                                  : AppColors.darkBackground),
                         borderRadius: BorderRadius.only(
                           topLeft: const Radius.circular(20),
                           topRight: const Radius.circular(20),
@@ -321,7 +321,7 @@ class _TypingIndicator extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurface : AppColors.background,
+              color: isDark ? AppColors.darkSurface : AppColors.darkBackground,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
@@ -423,7 +423,7 @@ class _AIMessageInput extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.white,
+        color: isDark ? AppColors.darkSurface : AppColors.textLight,
         border: Border(
           top: BorderSide(
             color: AppColors.divider.withValues(alpha: 0.5),
@@ -439,9 +439,7 @@ class _AIMessageInput extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkBackground
-                      : AppColors.background,
+                  color: AppColors.darkBackground,
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: TextField(

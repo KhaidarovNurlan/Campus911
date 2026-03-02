@@ -3,67 +3,36 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
+  // --- Основные цвета ---
   static const Color primary = Color(0xFF00C853);
-  static const Color primaryDark = Color(0xFF009624);
-  static const Color primaryLight = Color(0xFF5EFC82);
+  static const Color primaryDark = Color(0xFF81C784);
+  static const Color secondary = Color(0xFF9E9E9E);
 
-  static const Color secondary = Color(0xFF757575);
-  static const Color secondaryLight = Color(0xFFBDBDBD);
-  static const Color secondaryDark = Color(0xFF424242);
+  // --- Фон и поверхности ---
+  static const Color darkBackground = Color(0xFF0F110F);
+  static const Color darkSurface = Color(0xFF1A1C1A);
+  static const Color darkSurfaceVariant = Color(0xFF252825);
 
-  static const Color white = Color(0xFFFFFFFF);
+  // --- Текст ---
+  static const Color textLight = Color(0xFFF0F0F0);
+  static const Color textGrey = Color(0xFF9BA39B);
+  static const Color textDark = Color(0xFF121212);
 
-  static const Color background = Color(0xFFF5F5F5);
+  // --- Статусы ---
+  static const Color error = Color(0xFFCF6679);
+  static const Color info = Color(0xFF64B5F6);
+  static const Color success = Color(0xFF81C784);
 
-  static const Color textDark = Color(0xFF212121);
+  // --- Категории ---
+  static const Color transport = Color(0xFF4FC3F7);
+  static const Color food = Color(0xFFFFB74D);
+  static const Color books = Color(0xFF81C784);
+  static const Color housing = Color(0xFFCE93D8);
+  static const Color entertainment = Color(0xFFF48FB1);
+  static const Color health = Color(0xFFE57373);
+  static const Color clothing = Color(0xFF4DD0E1);
+  static const Color communication = Color(0xFF7986CB);
 
-  static const Color textGrey = Color(0xFF757575);
-
-  static const Color darkBackground = Color(0xFF121212);
-
-  static const Color darkSurface = Color(0xFF1E1E1E);
-
-  static const Color textLight = Color(0xFFE0E0E0);
-
-  static const Color error = Color(0xFFD32F2F);
-
-  static const Color warning = Color(0xFFFF9800);
-
-  static const Color info = Color(0xFF2196F3);
-
-  static const Color success = Color(0xFF4CAF50);
-
-  static const Color divider = Color(0xFFE0E0E0);
-
-  static Color shadow = Colors.black.withValues(alpha: 0.1);
-
-  static const LinearGradient darkGradient = LinearGradient(
-    colors: [darkSurface, darkBackground],
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-  );
-
-  static const Color academic = primary;
-
-  static const Color deadline = error;
-
-  static const Color personal = secondary;
-
-  static const Color news = info;
-
-  static const Color transport = Color(0xFF2196F3);
-
-  static const Color food = Color(0xFFFF9800);
-
-  static const Color books = Color(0xFF4CAF50);
-
-  static const Color housing = Color(0xFF9C27B0);
-
-  static const Color entertainment = Color(0xFFE91E63);
-
-  static const Color health = Color(0xFFF44336);
-
-  static const Color clothing = Color(0xFF00BCD4);
-
-  static const Color communication = Color(0xFF3F51B5);
+  // --- Вспомогательные ---
+  static const Color divider = Color(0xFF2C2E2C);
 }

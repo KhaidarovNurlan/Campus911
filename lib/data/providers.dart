@@ -6,23 +6,6 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 import 'models.dart';
 import 'firebase_service.dart';
 
-class ThemeProvider extends ChangeNotifier {
-  ThemeMode _themeMode = ThemeMode.light;
-  ThemeMode get themeMode => _themeMode;
-  bool get isDarkMode => _themeMode == ThemeMode.dark;
-  void toggleTheme() {
-    _themeMode = _themeMode == ThemeMode.light
-        ? ThemeMode.dark
-        : ThemeMode.light;
-    notifyListeners();
-  }
-
-  void setTheme(ThemeMode mode) {
-    _themeMode = mode;
-    notifyListeners();
-  }
-}
-
 class UserProvider extends ChangeNotifier {
   final _firebase = FirebaseService();
   UserModel? _user;
@@ -372,7 +355,6 @@ class CalendarProvider extends ChangeNotifier {
 
 class AppProviders {
   static List<SingleChildWidget> get providers => [
-    ChangeNotifierProvider<ThemeProvider>(create: (_) => ThemeProvider()),
     ChangeNotifierProvider<UserProvider>(create: (_) => UserProvider()),
     ChangeNotifierProvider<ScheduleProvider>(create: (_) => ScheduleProvider()),
     ChangeNotifierProvider<NewsProvider>(create: (_) => NewsProvider()),
