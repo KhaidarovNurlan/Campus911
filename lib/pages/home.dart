@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../theme/colors.dart';
-import '../theme/constants.dart';
 import '../data/providers.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -39,6 +38,16 @@ class HomeScreen extends StatelessWidget {
 
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
+
+  static const List<String> weekDays = [
+    'Mon',
+    'Tue',
+    'Wed',
+    'Thu',
+    'Fri',
+    'Sat',
+    'Sun',
+  ];
 
   @override
   State<HomeTab> createState() => _HomeTabState();
@@ -78,7 +87,7 @@ class _HomeTabState extends State<HomeTab> {
     final newsProvider = context.watch<NewsProvider>();
 
     final todayIndex = DateTime.now().weekday;
-    final today = AppConstants.weekDays[todayIndex > 6 ? 0 : todayIndex - 1];
+    final today = HomeTab.weekDays[todayIndex > 6 ? 0 : todayIndex - 1];
 
     return Scaffold(
       body: RefreshIndicator(
@@ -204,19 +213,17 @@ class _QuickAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.darkSurface : AppColors.textLight,
+          color: AppColors.darkSurface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+              color: Colors.black.withValues(alpha: 0.3),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -324,12 +331,10 @@ class _LessonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.textLight,
+        color: AppColors.darkSurface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: AppColors.primary.withValues(alpha: 0.3),
@@ -425,19 +430,17 @@ class _NewsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return InkWell(
       onTap: () => context.go('/news'),
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.darkSurface : AppColors.textLight,
+          color: AppColors.darkSurface,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+              color: Colors.black.withValues(alpha: 0.3),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -524,13 +527,9 @@ class _ShimmerBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Shimmer.fromColors(
-      baseColor: isDark ? AppColors.darkSurface : Colors.grey[300]!,
-      highlightColor: isDark
-          ? AppColors.textGrey.withValues(alpha: 0.1)
-          : Colors.grey[100]!,
+      baseColor: AppColors.darkSurface,
+      highlightColor: AppColors.textGrey.withValues(alpha: 0.1),
       child: Container(
         width: width,
         height: height,

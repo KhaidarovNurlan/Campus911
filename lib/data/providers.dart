@@ -4,12 +4,14 @@ import 'package:provider/single_child_widget.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'models.dart';
-import 'firebase_service.dart';
+import 'services.dart';
 
 class UserProvider extends ChangeNotifier {
-  final _firebase = FirebaseService();
+  final FirebaseService _firebase;
   UserModel? _user;
   bool _isLoading = false;
+
+  UserProvider({FirebaseService? firebase}) : _firebase = firebase ?? FirebaseService();
 
   UserModel? get user => _user;
   bool get isAuthenticated => _firebase.isFirebaseLoggedIn;
@@ -19,17 +21,16 @@ class UserProvider extends ChangeNotifier {
   String get college => _user?.college ?? '';
   String get groupName => _user?.groupName ?? '';
 
-  Future<UserModel?> fetchUserData() async {
+  Future<void> fetchUserData() async {
     _user = await _firebase.fetchCurrentUser();
     notifyListeners();
-    return _user;
   }
 
   Future<bool> checkGroupHeadman(String college, String group) async {
     return await _firebase.isHeadmanTaken(college, group);
   }
 
-  Future<void> authorize({
+  Future<void> register({
     required String email,
     required String password,
     required String name,
@@ -39,47 +40,34 @@ class UserProvider extends ChangeNotifier {
   }) async {
     _isLoading = true;
     notifyListeners();
-    try {
-      await _firebase.authorizeUser(
-        email: email,
-        password: password,
-        name: name,
-        college: college,
-        group: group,
-        role: role,
-      );
-
-      final currentUser = _firebase.currentUid;
-      if (currentUser != null) {
-        await fetchUserData();
-      }
-    } catch (e) {
-      debugPrint("❌ Register Error: $e");
-      rethrow;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+    await _firebase.registerUser(
+      email: email,
+      password: password,
+      name: name,
+      college: college,
+      group: group,
+      role: role,
+    );
+    final currentUser = _firebase.currentUid;
+    if (currentUser != null) {
+      await fetchUserData();
     }
+    _isLoading = false;
+    notifyListeners();
   }
 
   Future<void> login(String email, String password) async {
     _isLoading = true;
     notifyListeners();
-    try {
-      final firebaseUser = await _firebase.signIn(email, password);
-      if (firebaseUser != null) {
-        final userData = await _firebase.fetchCurrentUser();
-        if (userData != null) {
-          _user = userData;
-        }
+    final firebaseUser = await _firebase.signIn(email, password);
+    if (firebaseUser != null) {
+      final userData = await _firebase.fetchCurrentUser();
+      if (userData != null) {
+        _user = userData;
       }
-    } catch (e) {
-      debugPrint("❌ Login Error: $e");
-      rethrow;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
     }
+    _isLoading = false;
+    notifyListeners();
   }
 
   Future<void> logout() async {
@@ -87,16 +75,13 @@ class UserProvider extends ChangeNotifier {
     _user = null;
     notifyListeners();
   }
-
-  void setUser(UserModel user) {
-    _user = user;
-    notifyListeners();
-  }
 }
 
 class ScheduleProvider extends ChangeNotifier {
-  final _firebase = FirebaseService();
+  final FirebaseService _firebase;
   final List<LessonModel> _lessons = [];
+
+  ScheduleProvider({FirebaseService? firebase}) : _firebase = firebase ?? FirebaseService();
 
   List<LessonModel> get lessons => _lessons;
 
@@ -134,9 +119,11 @@ class ScheduleProvider extends ChangeNotifier {
 }
 
 class NewsProvider extends ChangeNotifier {
-  final _firebase = FirebaseService();
+  final FirebaseService _firebase;
   final List<NewsModel> _news = [];
   String? _selectedCategory;
+
+  NewsProvider({FirebaseService? firebase}) : _firebase = firebase ?? FirebaseService();
 
   String? get selectedCategory => _selectedCategory;
   List<NewsModel> get news {
@@ -170,7 +157,7 @@ class NewsProvider extends ChangeNotifier {
 }
 
 class ChatProvider extends ChangeNotifier {
-  final _firebase = FirebaseService();
+  final FirebaseService _firebase;
   final List<MessageModel> _messages = [];
   ChatSession? _chatSession;
   final GenerativeModel _model = GenerativeModel(
@@ -178,6 +165,8 @@ class ChatProvider extends ChangeNotifier {
     apiKey: dotenv.env['GEMINI_API_KEY'] ?? '',
   );
   bool isTyping = false;
+
+  ChatProvider({FirebaseService? firebase}) : _firebase = firebase ?? FirebaseService();
 
   List<MessageModel> get messages => _messages;
 
@@ -212,34 +201,30 @@ class ChatProvider extends ChangeNotifier {
     isTyping = true;
     notifyListeners();
 
-    try {
-      _chatSession ??= _model.startChat(
-        history: _messages.map((m) => Content(
-          m.isMe ? 'user' : 'model',
-          [TextPart(m.text)]
-        )).toList(),
-      );
+    _chatSession ??= _model.startChat(
+      history: _messages.map((m) => Content(
+        m.isMe ? 'user' : 'model',
+        [TextPart(m.text)]
+      )).toList(),
+    );
 
-      final response = await _chatSession!.sendMessage(Content.text(text));
-      final botText = response.text ?? '...';
+    final response = await _chatSession!.sendMessage(Content.text(text));
+    final botText = response.text ?? '...';
 
-      final botMsg = MessageModel(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        text: botText,
-        senderId: 'bot',
-        senderName: 'AI-friend',
-        timestamp: DateTime.now(),
-        isMe: false,
-      );
+    final botMsg = MessageModel(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      text: botText,
+      senderId: 'bot',
+      senderName: 'AI-friend',
+      timestamp: DateTime.now(),
+      isMe: false,
+    );
 
-      _messages.add(botMsg);
-      await _firebase.saveMessage(userId, botMsg);
-    } catch (e) {
-      debugPrint("❌ Chat Error: $e");
-    } finally {
-      isTyping = false;
-      notifyListeners();
-    }
+    _messages.add(botMsg);
+    await _firebase.saveMessage(userId, botMsg);
+
+    isTyping = false;
+    notifyListeners();
   }
 
   Future<void> clearChatHistory(String userId) async {
@@ -251,8 +236,10 @@ class ChatProvider extends ChangeNotifier {
 }
 
 class ExpenseProvider with ChangeNotifier {
-  final _firebase = FirebaseService();
+  final FirebaseService _firebase;
   final List<ExpenseModel> _expenses = [];
+
+  ExpenseProvider({FirebaseService? firebase}) : _firebase = firebase ?? FirebaseService();
 
   List<ExpenseModel> get expenses => _expenses;
   double get totalAmount => _expenses.fold(0, (sum, e) => sum + e.amount);
@@ -285,8 +272,10 @@ class ExpenseProvider with ChangeNotifier {
 }
 
 class NotesProvider extends ChangeNotifier {
-  final _firebase = FirebaseService();
+  final FirebaseService _firebase;
   final List<NoteModel> _notes = [];
+
+  NotesProvider({FirebaseService? firebase}) : _firebase = firebase ?? FirebaseService();
 
   List<NoteModel> get notes => _notes;
 
@@ -320,8 +309,10 @@ class NotesProvider extends ChangeNotifier {
 }
 
 class CalendarProvider extends ChangeNotifier {
-  final _firebase = FirebaseService();
+  final FirebaseService _firebase;
   final List<EventModel> _events = [];
+
+  CalendarProvider({FirebaseService? firebase}) : _firebase = firebase ?? FirebaseService();
 
   List<EventModel> get events => _events;
 

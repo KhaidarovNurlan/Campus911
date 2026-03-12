@@ -139,7 +139,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               Center(
                 child: TextButton(
-                  onPressed: () => context.go('/auth'),
+                  onPressed: () => context.go('/register'),
                   child: RichText(
                     text: TextSpan(
                       text: 'Do not have an account yet? ',
@@ -148,7 +148,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       children: [
                         TextSpan(
-                          text: 'Authorize',
+                          text: 'Register',
                           style: TextStyle(
                             color: AppColors.primary,
                             fontWeight: FontWeight.bold,

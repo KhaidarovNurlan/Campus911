@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
 import '../theme/colors.dart';
-import '../theme/constants.dart';
 import '../theme/custom_button.dart';
 import '../theme/custom_text_field.dart';
 import '../data/models.dart';
@@ -12,6 +11,16 @@ import '../data/providers.dart';
 
 class ScheduleScreen extends StatefulWidget {
   const ScheduleScreen({super.key});
+
+  static const List<String> weekDays = [
+    'Mon',
+    'Tue',
+    'Wed',
+    'Thu',
+    'Fri',
+    'Sat',
+    'Sun',
+  ];
 
   @override
   State<ScheduleScreen> createState() => _ScheduleScreenState();
@@ -26,7 +35,7 @@ class _ScheduleScreenState extends State<ScheduleScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 7, vsync: this);
+    _tabController = TabController(length: ScheduleScreen.weekDays.length, vsync: this);
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) {
         _pageController.animateToPage(
@@ -36,17 +45,12 @@ class _ScheduleScreenState extends State<ScheduleScreen>
         );
       }
     });
-    _initData();
-  }
-
-  Future<void> _initData() async {
-    await Future.microtask(() {
+    Future.microtask(() async {
       if (!mounted) return;
-      final userProvider = context.read<UserProvider>();
-      context.read<ScheduleProvider>().loadSchedule(
-        userProvider.college,
-        userProvider.groupName,
-      );
+      final user = context.read<UserProvider>().user;
+      if (user != null) {
+        context.read<ScheduleProvider>().loadSchedule(user.college, user.groupName);
+      }
     });
   }
 
@@ -75,28 +79,28 @@ class _ScheduleScreenState extends State<ScheduleScreen>
           indicatorColor: AppColors.primary,
           labelColor: AppColors.primary,
           unselectedLabelColor: AppColors.textGrey,
-          tabs: AppConstants.weekDays.map((day) {
-            return Tab(text: day.substring(0, 2));
+          tabs: ScheduleScreen.weekDays.map((day) {
+            return Tab(text: day);
           }).toList(),
         ),
       ),
       body: PageView.builder(
         controller: _pageController,
-        itemCount: 7,
+        itemCount: ScheduleScreen.weekDays.length,
         onPageChanged: (index) {
           setState(() => _currentDayIndex = index);
           _tabController.animateTo(index);
         },
         itemBuilder: (context, index) {
           return _DaySchedule(
-            day: AppConstants.weekDays[index],
+            day: ScheduleScreen.weekDays[index],
             isHeadman: isHeadman,
           );
         },
       ),
       floatingActionButton: isHeadman
           ? FloatingActionButton.extended(
-              heroTag: 'schedule_add_fab',
+              heroTag: 'add_lesson_btn',
               onPressed: () => _showAddLessonDialog(context),
               icon: const Icon(Icons.add_rounded),
               label: const Text('Add'),
@@ -111,7 +115,7 @@ class _ScheduleScreenState extends State<ScheduleScreen>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _AddLessonBottomSheet(
-        selectedDay: AppConstants.weekDays[_currentDayIndex],
+        selectedDay: ScheduleScreen.weekDays[_currentDayIndex],
       ),
     );
   }
@@ -150,8 +154,6 @@ class _LessonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: InkWell(
@@ -159,7 +161,7 @@ class _LessonCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         child: Container(
           decoration: BoxDecoration(
-            color: isDark ? AppColors.darkSurface : AppColors.textLight,
+            color: AppColors.darkSurface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: _getLessonColor(lesson.type).withValues(alpha: 0.3),
@@ -167,7 +169,7 @@ class _LessonCard extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+                color: Colors.black.withValues(alpha: 0.3),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -408,12 +410,11 @@ class _AddLessonBottomSheetState extends State<_AddLessonBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isEditing = widget.lessonToEdit != null;
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.textLight,
+        color: AppColors.darkSurface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: EdgeInsets.only(
@@ -508,7 +509,7 @@ class _AddLessonBottomSheetState extends State<_AddLessonBottomSheet> {
                 'Lesson type',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: isDark ? AppColors.textLight : AppColors.textDark,
+                  color: AppColors.textLight,
                 ),
               ),
               const SizedBox(height: 8),
@@ -671,8 +672,6 @@ class _TimeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -680,7 +679,7 @@ class _TimeSelector extends StatelessWidget {
           label,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.w600,
-            color: isDark ? AppColors.textLight : AppColors.textDark,
+            color: AppColors.textLight,
           ),
         ),
         const SizedBox(height: 8),
@@ -693,9 +692,7 @@ class _TimeSelector extends StatelessWidget {
                 return Theme(
                   data: Theme.of(context).copyWith(
                     timePickerTheme: TimePickerThemeData(
-                      backgroundColor: isDark
-                          ? AppColors.darkSurface
-                          : AppColors.textLight,
+                      backgroundColor: AppColors.darkSurface,
                     ),
                   ),
                   child: child!,
@@ -710,7 +707,7 @@ class _TimeSelector extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurface : AppColors.darkBackground,
+              color: AppColors.darkSurface,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: AppColors.textGrey.withValues(alpha: 0.3),
@@ -743,11 +740,9 @@ class _LessonOptionsSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.textLight,
+        color: AppColors.darkSurface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.all(24),

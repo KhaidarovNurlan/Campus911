@@ -25,17 +25,16 @@ class CustomButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     Color baseColor = backgroundColor ?? theme.colorScheme.primary;
 
-    if (isDark && !isOutlined && backgroundColor == null) {
+    if (!isOutlined && backgroundColor == null) {
       baseColor = theme.colorScheme.primaryContainer;
     }
 
     final Color contentColor = textColor ??
         (isOutlined
             ? baseColor
-            : (isDark ? theme.colorScheme.onPrimaryContainer : Colors.white));
+            : theme.colorScheme.onPrimaryContainer);
 
     final buttonStyle = ElevatedButton.styleFrom(
       backgroundColor: isOutlined ? Colors.transparent : baseColor,

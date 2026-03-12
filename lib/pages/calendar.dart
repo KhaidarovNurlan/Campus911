@@ -4,7 +4,6 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 
 import '../theme/colors.dart';
-import '../theme/constants.dart';
 import '../theme/custom_button.dart';
 import '../theme/custom_text_field.dart';
 import '../data/models.dart';
@@ -12,6 +11,13 @@ import '../data/providers.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
+
+  static const List<Map<String, dynamic>> eventCategories = [
+    {'id': 'academic', 'name': 'Academic', 'icon': Icons.school_rounded},
+    {'id': 'deadline', 'name': 'Deadline', 'icon': Icons.notification_important_rounded},
+    {'id': 'personal', 'name': 'Personal', 'icon': Icons.celebration_rounded},
+    {'id': 'news', 'name': 'News', 'icon': Icons.campaign_rounded},
+  ];
 
   @override
   State<CalendarScreen> createState() => _CalendarScreenState();
@@ -26,11 +32,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
   void initState() {
     super.initState();
     _selectedDay = _focusedDay;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final userId = context.read<UserProvider>().user?.id ?? '';
-      if (userId.isNotEmpty) {
-        context.read<CalendarProvider>().loadEvents(userId);
+    Future.microtask(() async {
+      if (!mounted) return;
+      final user = context.read<UserProvider>().user;
+      if (user != null) {
+        await context.read<CalendarProvider>().loadEvents(user.id);
       }
     });
   }
@@ -75,7 +81,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
             onFormatChanged: (format) => setState(() => _calendarFormat = format),
             onPageChanged: (focusedDay) => _focusedDay = focusedDay,
           ),
-
           Expanded(
             child: Container(
               width: double.infinity,
@@ -97,6 +102,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: "add_event_btn",
         onPressed: () => _showAddEventDialog(context),
         icon: const Icon(Icons.add_rounded),
         label: const Text('Add'),
@@ -135,17 +141,15 @@ class _CalendarCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : Colors.white,
+        color: AppColors.darkSurface,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -234,14 +238,18 @@ class _EventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final color = _getEventColor(event.type);
+
+    final category = CalendarScreen.eventCategories.firstWhere(
+      (cat) => cat['id'] == event.type,
+      orElse: () => {'icon': Icons.event_note_rounded},
+    );
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : Colors.white,
+        color: AppColors.darkSurface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color.withValues(alpha: 0.2)),
         boxShadow: [
@@ -260,7 +268,7 @@ class _EventCard extends StatelessWidget {
               color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Text(event.typeEmoji, style: const TextStyle(fontSize: 24)),
+            child: Icon(category['icon'] as IconData, color: color, size: 28),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -329,13 +337,11 @@ class _EmptyEvents extends StatelessWidget {
               color: AppColors.textGrey.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 24),
-            Text('No events yet', style: TextStyle(color: AppColors.textGrey, fontSize: 18)),
+            const Text('No events yet', style: TextStyle(color: AppColors.textGrey, fontSize: 18)),
             const SizedBox(height: 8),
             Text(
               DateFormat('d MMMM yyyy', 'en_US').format(selectedDate),
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: AppColors.textGrey),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textGrey),
             ),
           ],
         ),
@@ -351,11 +357,16 @@ class _EventDetailsSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final color = _getEventColor(event.type);
+
+    final category = CalendarScreen.eventCategories.firstWhere(
+      (cat) => cat['id'] == event.type,
+      orElse: () => {'icon': Icons.event_note_rounded, 'name': 'Event'},
+    );
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.textLight,
+        color: AppColors.darkSurface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.all(24),
@@ -374,10 +385,16 @@ class _EventDetailsSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-
           Row(
             children: [
-              Text(event.typeEmoji, style: const TextStyle(fontSize: 48)),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(category['icon'] as IconData, color: color, size: 40),
+              ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
@@ -385,11 +402,11 @@ class _EventDetailsSheet extends StatelessWidget {
                   children: [
                     Text(
                       event.title,
-                      style: Theme.of(context).textTheme.headlineSmall,
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _getTypeName(event.type),
+                      category['name'] as String,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.textGrey,
                       ),
@@ -400,7 +417,6 @@ class _EventDetailsSheet extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 24),
-
           _InfoRow(
             icon: Icons.calendar_today_rounded,
             label: 'Date',
@@ -412,7 +428,6 @@ class _EventDetailsSheet extends StatelessWidget {
             label: 'Time',
             value: DateFormat('HH:mm').format(event.date),
           ),
-
           if (event.description != null) ...[
             const SizedBox(height: 12),
             _InfoRow(
@@ -426,18 +441,13 @@ class _EventDetailsSheet extends StatelessWidget {
     );
   }
 
-  String _getTypeName(String type) {
+  Color _getEventColor(String type) {
     switch (type) {
-      case 'academic':
-        return 'Academic';
-      case 'deadline':
-        return 'Deadline';
-      case 'personal':
-        return 'Personal';
-      case 'news':
-        return 'News';
-      default:
-        return 'Event';
+      case 'academic': return AppColors.books;
+      case 'deadline': return AppColors.health;
+      case 'personal': return AppColors.communication;
+      case 'news': return AppColors.entertainment;
+      default: return AppColors.primary;
     }
   }
 }
@@ -466,16 +476,12 @@ class _InfoRow extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: AppColors.textGrey),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textGrey),
               ),
               const SizedBox(height: 4),
               Text(
                 value,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
               ),
             ],
           ),
@@ -511,11 +517,9 @@ class _AddEventBottomSheetState extends State<_AddEventBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.textLight,
+        color: AppColors.darkSurface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: EdgeInsets.only(
@@ -552,12 +556,8 @@ class _AddEventBottomSheetState extends State<_AddEventBottomSheet> {
                           style: Theme.of(context).textTheme.headlineSmall,
                         ),
                         Text(
-                          DateFormat(
-                            'd MMMM yyyy',
-                            'en_US',
-                          ).format(widget.selectedDate),
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: AppColors.textGrey),
+                          DateFormat('d MMMM yyyy', 'en_US').format(widget.selectedDate),
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textGrey),
                         ),
                       ],
                     ),
@@ -569,7 +569,6 @@ class _AddEventBottomSheetState extends State<_AddEventBottomSheet> {
                 ],
               ),
               const SizedBox(height: 24),
-
               CustomTextField(
                 label: 'Name',
                 hint: '...',
@@ -583,7 +582,6 @@ class _AddEventBottomSheetState extends State<_AddEventBottomSheet> {
                 },
               ),
               const SizedBox(height: 16),
-
               CustomTextField(
                 label: 'Description (optional)',
                 hint: '...',
@@ -592,62 +590,56 @@ class _AddEventBottomSheetState extends State<_AddEventBottomSheet> {
                 prefixIcon: const Icon(Icons.description_rounded),
               ),
               const SizedBox(height: 16),
-
               Text(
                 'Event type',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: isDark ? AppColors.textLight : AppColors.textDark,
+                  color: AppColors.textLight,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: AppConstants.eventCategories.map((type) {
+                children: CalendarScreen.eventCategories.map((type) {
                   final isSelected = _selectedType == type['id'];
                   return ChoiceChip(
                     label: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(type['emoji']!),
-                        const SizedBox(width: 6),
-                        Text(type['name']!),
+                        Icon(
+                          type['icon'] as IconData,
+                          size: 18,
+                          color: isSelected ? AppColors.primary : AppColors.textGrey
+                        ),
+                        const SizedBox(width: 8),
+                        Text(type['name'] as String),
                       ],
                     ),
                     selected: isSelected,
                     onSelected: (selected) {
-                      setState(() => _selectedType = type['id']!);
+                      setState(() => _selectedType = type['id'] as String);
                     },
-                    selectedColor: AppColors.primary.withValues(alpha: 0.2),
-                    backgroundColor: isDark
-                        ? AppColors.darkSurface
-                        : AppColors.textLight,
+                    selectedColor: AppColors.primary.withValues(alpha: 0.15),
+                    backgroundColor: AppColors.darkSurface,
                     labelStyle: TextStyle(
-                      color: isSelected
-                          ? AppColors.primary
-                          : AppColors.textGrey,
-                      fontWeight: isSelected
-                          ? FontWeight.w600
-                          : FontWeight.normal,
+                      color: isSelected ? AppColors.primary : AppColors.textGrey,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                     ),
                     side: BorderSide(
-                      color: isSelected
-                          ? AppColors.primary
-                          : AppColors.textGrey.withValues(alpha: 0.3),
+                      color: isSelected ? AppColors.primary : AppColors.textGrey.withValues(alpha: 0.2),
                     ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   );
                 }).toList(),
               ),
-              const SizedBox(height: 16),
-
+              const SizedBox(height: 24),
               _TimeSelector(
                 label: 'Time',
                 time: _selectedTime,
                 onTimeSelected: (time) => setState(() => _selectedTime = time),
               ),
-              const SizedBox(height: 16),
-
+              const SizedBox(height: 24),
               CustomButton(
                 text: 'Add',
                 onPressed: _saveEvent,
@@ -663,9 +655,7 @@ class _AddEventBottomSheetState extends State<_AddEventBottomSheet> {
   void _saveEvent() {
     if (!_formKey.currentState!.validate()) return;
 
-    final userProvider = context.read<UserProvider>();
-    final userId = userProvider.user?.id ?? '';
-
+    final userId = context.read<UserProvider>().user?.id ?? '';
     final eventDate = DateTime(
       widget.selectedDate.year,
       widget.selectedDate.month,
@@ -679,13 +669,10 @@ class _AddEventBottomSheetState extends State<_AddEventBottomSheet> {
       title: _titleController.text,
       date: eventDate,
       type: _selectedType,
-      description: _descriptionController.text.isEmpty
-          ? null
-          : _descriptionController.text,
+      description: _descriptionController.text.isEmpty ? null : _descriptionController.text,
     );
 
     context.read<CalendarProvider>().addEvent(userId, event);
-
     Navigator.pop(context);
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -711,8 +698,6 @@ class _TimeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -720,7 +705,7 @@ class _TimeSelector extends StatelessWidget {
           label,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.w600,
-            color: isDark ? AppColors.textLight : AppColors.textDark,
+            color: AppColors.textLight,
           ),
         ),
         const SizedBox(height: 8),
@@ -729,18 +714,6 @@ class _TimeSelector extends StatelessWidget {
             final pickedTime = await showTimePicker(
               context: context,
               initialTime: time,
-              builder: (context, child) {
-                return Theme(
-                  data: Theme.of(context).copyWith(
-                    timePickerTheme: TimePickerThemeData(
-                      backgroundColor: isDark
-                          ? AppColors.darkSurface
-                          : AppColors.textLight,
-                    ),
-                  ),
-                  child: child!,
-                );
-              },
             );
             if (pickedTime != null) {
               onTimeSelected(pickedTime);
@@ -750,10 +723,10 @@ class _TimeSelector extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurface : AppColors.darkBackground,
+              color: AppColors.darkSurface,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: AppColors.textGrey.withValues(alpha: 0.3),
+                color: AppColors.textGrey.withValues(alpha: 0.2),
               ),
             ),
             child: Row(
@@ -762,9 +735,7 @@ class _TimeSelector extends StatelessWidget {
                 const SizedBox(width: 12),
                 Text(
                   time.format(context),
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
                 ),
               ],
             ),

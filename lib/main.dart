@@ -11,7 +11,7 @@ import 'data/providers.dart';
 
 import 'firebase_options.dart';
 
-import 'pages/auth.dart';
+import 'pages/register.dart';
 import 'pages/login.dart';
 import 'pages/home.dart';
 import 'pages/schedule.dart';
@@ -79,16 +79,16 @@ GoRouter _createRouter(UserProvider userProvider) {
     refreshListenable: userProvider,
     redirect: (context, state) {
       final bool loggedIn = userProvider.isAuthenticated;
-      final bool isAuthRoute = state.matchedLocation == '/auth' || state.matchedLocation == '/login';
-      if (!loggedIn) return isAuthRoute ? null : '/auth';
-      if (loggedIn && isAuthRoute) return '/home';
+      final bool isRegisterRoute = state.matchedLocation == '/register' || state.matchedLocation == '/login';
+      if (!loggedIn) return isRegisterRoute ? null : '/register';
+      if (loggedIn && isRegisterRoute) return '/home';
       return null;
     },
     routes: [
       GoRoute(
-        path: '/auth',
-        name: 'auth',
-        builder: (context, state) => const AuthScreen(),
+        path: '/register',
+        name: 'register',
+        builder: (context, state) => const RegisterScreen(),
       ),
       GoRoute(
         path: '/login',

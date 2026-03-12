@@ -36,7 +36,7 @@ class FirebaseService {
     return snapshot.docs.isNotEmpty;
   }
 
-  Future<void> authorizeUser({
+  Future<void> registerUser({
     required String email,
     required String password,
     required String name,

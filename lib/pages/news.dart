@@ -4,11 +4,16 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
 import '../theme/colors.dart';
-import '../theme/constants.dart';
 import '../theme/custom_button.dart';
 import '../theme/custom_text_field.dart';
 import '../data/models.dart';
 import '../data/providers.dart';
+
+final List<Map<String, dynamic>> newsCategories = [
+  {'id': 'events', 'name': 'Events', 'icon': Icons.campaign_rounded},
+  {'id': 'academic', 'name': 'Academic', 'icon': Icons.school_rounded},
+  {'id': 'sporting', 'name': 'Sporting', 'icon': Icons.sports_basketball_rounded},
+];
 
 class NewsScreen extends StatefulWidget {
   const NewsScreen({super.key});
@@ -18,22 +23,15 @@ class NewsScreen extends StatefulWidget {
 }
 
 class _NewsScreenState extends State<NewsScreen> {
-  bool _isLoading = true;
-
   @override
   void initState() {
     super.initState();
-
     Future.microtask(() async {
       if (!mounted) return;
-
-      final userProvider = context.read<UserProvider>();
-      final newsProvider = context.read<NewsProvider>();
-
-      final userCollege = userProvider.user?.college ?? 'AITU';
-
-      await newsProvider.loadNews(userCollege);
-      if (mounted) setState(() => _isLoading = false);
+      final user = context.read<UserProvider>().user;
+      if (user != null) {
+        await context.read<NewsProvider>().loadNews(user.college);
+      }
     });
   }
 
@@ -42,10 +40,6 @@ class _NewsScreenState extends State<NewsScreen> {
     final newsProvider = context.watch<NewsProvider>();
     final userProvider = context.watch<UserProvider>();
     final isHeadman = userProvider.isHeadman;
-
-    if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
 
     return Scaffold(
       appBar: AppBar(
@@ -73,14 +67,14 @@ class _NewsScreenState extends State<NewsScreen> {
                 ),
               ),
               const PopupMenuDivider(),
-              ...AppConstants.newsCategories.map((category) {
+              ...newsCategories.map((category) {
                 return PopupMenuItem(
                   value: category['id'],
                   child: Row(
                     children: [
-                      Text(category['emoji']!),
+                      Icon(category['icon'] as IconData, size: 20),
                       const SizedBox(width: 12),
-                      Text(category['name']!),
+                      Text(category['name'] as String),
                     ],
                   ),
                 );
@@ -100,6 +94,7 @@ class _NewsScreenState extends State<NewsScreen> {
             ),
       floatingActionButton: isHeadman
           ? FloatingActionButton.extended(
+              heroTag: "add_news_btn",
               onPressed: () => _showAddNewsDialog(context),
               icon: const Icon(Icons.add_rounded),
               label: const Text('Add'),
@@ -120,12 +115,14 @@ class _NewsScreenState extends State<NewsScreen> {
 
 class _NewsCard extends StatelessWidget {
   final NewsModel news;
-
   const _NewsCard({required this.news});
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final categoryData = newsCategories.firstWhere(
+      (c) => c['id'] == news.category,
+      orElse: () => {'icon': Icons.newspaper_rounded},
+    );
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -134,113 +131,94 @@ class _NewsCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         child: Container(
           decoration: BoxDecoration(
-            color: isDark ? AppColors.darkSurface : AppColors.textLight,
+            color: AppColors.darkSurface,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+                color: Colors.black.withValues(alpha: 0.3),
                 blurRadius: 15,
                 offset: const Offset(0, 5),
               ),
             ],
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _getCategoryColor(
-                              news.category,
-                            ).withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(news.categoryEmoji),
-                              const SizedBox(width: 6),
-                              Text(
-                                news.categoryName,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: _getCategoryColor(news.category),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Spacer(),
-                        Icon(
-                          Icons.access_time_rounded,
-                          size: 14,
-                          color: AppColors.textGrey,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          _formatDate(news.date),
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: AppColors.textGrey),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-
-                    Text(
-                      news.title,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        height: 1.3,
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: _getCategoryColor(news.category).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 8),
-
-                    Text(
-                      news.content,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textGrey,
-                        height: 1.5,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            categoryData['icon'] as IconData,
+                            size: 14,
+                            color: _getCategoryColor(news.category),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            news.categoryName,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: _getCategoryColor(news.category),
+                            ),
+                          ),
+                        ],
                       ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 12),
-
-                    Row(
-                      children: [
-                        Text(
-                          'Read more',
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                        ),
-                        const SizedBox(width: 4),
-                        const Icon(
-                          Icons.arrow_forward_rounded,
-                          color: AppColors.primary,
-                          size: 18,
-                        ),
-                      ],
+                    const Spacer(),
+                    Icon(Icons.access_time_rounded, size: 14, color: AppColors.textGrey),
+                    const SizedBox(width: 4),
+                    Text(
+                      _formatDate(news.date),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textGrey),
                     ),
                   ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 12),
+                Text(
+                  news.title,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    height: 1.3,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  news.content,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textGrey,
+                    height: 1.5,
+                  ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 12),
+                const Row(
+                  children: [
+                    Text(
+                      'Read more',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(width: 4),
+                    Icon(Icons.arrow_forward_rounded, color: AppColors.primary, size: 18),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -249,30 +227,20 @@ class _NewsCard extends StatelessWidget {
 
   Color _getCategoryColor(String category) {
     switch (category) {
-      case 'events':
-        return AppColors.info;
-      case 'academic':
-        return AppColors.primary;
-      case 'sporting':
-        return AppColors.error;
-      default:
-        return AppColors.textGrey;
+      case 'events': return AppColors.info;
+      case 'academic': return AppColors.primary;
+      case 'sporting': return AppColors.error;
+      default: return AppColors.textGrey;
     }
   }
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
-
-    if (difference.inDays == 0) {
-      return 'Today';
-    } else if (difference.inDays == 1) {
-      return 'Yesterday';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays} days ago';
-    } else {
-      return DateFormat('d MMM', 'en_US').format(date);
-    }
+    if (difference.inDays == 0) return 'Today';
+    if (difference.inDays == 1) return 'Yesterday';
+    if (difference.inDays < 7) return '${difference.inDays} days ago';
+    return DateFormat('d MMM', 'en_US').format(date);
   }
 
   void _showNewsDetails(BuildContext context) {
@@ -287,12 +255,14 @@ class _NewsCard extends StatelessWidget {
 
 class _NewsDetailsSheet extends StatelessWidget {
   final NewsModel news;
-
   const _NewsDetailsSheet({required this.news});
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final categoryData = newsCategories.firstWhere(
+      (c) => c['id'] == news.category,
+      orElse: () => {'icon': Icons.newspaper_rounded},
+    );
 
     return DraggableScrollableSheet(
       initialChildSize: 0.9,
@@ -301,15 +271,14 @@ class _NewsDetailsSheet extends StatelessWidget {
       builder: (context, scrollController) {
         return Container(
           decoration: BoxDecoration(
-            color: isDark ? AppColors.darkSurface : AppColors.textLight,
+            color: AppColors.darkSurface,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
             children: [
               Center(
                 child: Container(
-                  width: 40,
-                  height: 4,
+                  width: 40, height: 4,
                   margin: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
                     color: AppColors.textGrey.withValues(alpha: 0.3),
@@ -317,7 +286,6 @@ class _NewsDetailsSheet extends StatelessWidget {
                   ),
                 ),
               ),
-
               Expanded(
                 child: SingleChildScrollView(
                   controller: scrollController,
@@ -326,22 +294,18 @@ class _NewsDetailsSheet extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: _getCategoryColor(
-                            news.category,
-                          ).withValues(alpha: 0.1),
+                          color: _getCategoryColor(news.category).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
-                              news.categoryEmoji,
-                              style: const TextStyle(fontSize: 20),
+                            Icon(
+                              categoryData['icon'] as IconData,
+                              color: _getCategoryColor(news.category),
+                              size: 20,
                             ),
                             const SizedBox(width: 8),
                             Text(
@@ -356,39 +320,20 @@ class _NewsDetailsSheet extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 16),
-
-                      Text(
-                        news.title,
-                        style: Theme.of(context).textTheme.headlineMedium,
-                      ),
+                      Text(news.title, style: Theme.of(context).textTheme.headlineMedium),
                       const SizedBox(height: 12),
-
                       Row(
                         children: [
-                          const Icon(
-                            Icons.calendar_today_rounded,
-                            size: 16,
-                            color: AppColors.textGrey,
-                          ),
+                          const Icon(Icons.calendar_today_rounded, size: 16, color: AppColors.textGrey),
                           const SizedBox(width: 6),
                           Text(
-                            DateFormat(
-                              'd MMMM yyyy, HH:mm',
-                              'en_US',
-                            ).format(news.date),
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: AppColors.textGrey),
+                            DateFormat('d MMMM yyyy, HH:mm', 'en_US').format(news.date),
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textGrey),
                           ),
                         ],
                       ),
                       const SizedBox(height: 24),
-
-                      Text(
-                        news.content,
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodyLarge?.copyWith(height: 1.8),
-                      ),
+                      Text(news.content, style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.8)),
                     ],
                   ),
                 ),
@@ -402,21 +347,16 @@ class _NewsDetailsSheet extends StatelessWidget {
 
   Color _getCategoryColor(String category) {
     switch (category) {
-      case 'events':
-        return AppColors.info;
-      case 'academic':
-        return AppColors.primary;
-      case 'sporting':
-        return AppColors.error;
-      default:
-        return AppColors.textGrey;
+      case 'events': return AppColors.info;
+      case 'academic': return AppColors.primary;
+      case 'sporting': return AppColors.error;
+      default: return AppColors.textGrey;
     }
   }
 }
 
 class _EmptyNews extends StatelessWidget {
   final bool isHeadman;
-
   const _EmptyNews({required this.isHeadman});
 
   @override
@@ -435,9 +375,7 @@ class _EmptyNews extends StatelessWidget {
             const SizedBox(height: 24),
             Text(
               'No news yet',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyLarge?.copyWith(color: AppColors.textGrey),
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppColors.textGrey),
               textAlign: TextAlign.center,
             ),
           ],
@@ -458,8 +396,7 @@ class _AddNewsBottomSheetState extends State<_AddNewsBottomSheet> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _contentController = TextEditingController();
-
-  String _selectedCategory = 'announcements';
+  String _selectedCategory = 'events';
 
   @override
   void dispose() {
@@ -470,17 +407,14 @@ class _AddNewsBottomSheetState extends State<_AddNewsBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final userProvider = context.read<UserProvider>();
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.textLight,
+        color: AppColors.darkSurface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Form(
@@ -497,17 +431,11 @@ class _AddNewsBottomSheetState extends State<_AddNewsBottomSheet> {
                       color: AppColors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(
-                      Icons.article_rounded,
-                      color: AppColors.primary,
-                    ),
+                    child: const Icon(Icons.article_rounded, color: AppColors.primary),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
-                      'Add news',
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
+                    child: Text('Add news', style: Theme.of(context).textTheme.headlineSmall),
                   ),
                   IconButton(
                     icon: const Icon(Icons.close_rounded),
@@ -516,21 +444,14 @@ class _AddNewsBottomSheetState extends State<_AddNewsBottomSheet> {
                 ],
               ),
               const SizedBox(height: 24),
-
               CustomTextField(
                 label: 'Title',
                 hint: '...',
                 controller: _titleController,
                 prefixIcon: const Icon(Icons.title_rounded),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Enter title';
-                  }
-                  return null;
-                },
+                validator: (value) => (value == null || value.isEmpty) ? 'Enter title' : null,
               ),
               const SizedBox(height: 16),
-
               CustomTextField(
                 label: 'Description (optional)',
                 hint: '...',
@@ -539,55 +460,49 @@ class _AddNewsBottomSheetState extends State<_AddNewsBottomSheet> {
                 prefixIcon: const Icon(Icons.article_rounded),
               ),
               const SizedBox(height: 16),
-
               Text(
                 'Category',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: isDark ? AppColors.textLight : AppColors.textDark,
+                  color: AppColors.textLight,
                 ),
               ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: AppConstants.newsCategories.map((category) {
+                children: newsCategories.map((category) {
                   final isSelected = _selectedCategory == category['id'];
                   return ChoiceChip(
                     label: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(category['emoji']!),
+                        Icon(
+                          category['icon'] as IconData,
+                          size: 18,
+                          color: isSelected ? AppColors.primary : AppColors.textGrey
+                        ),
                         const SizedBox(width: 6),
-                        Text(category['name']!),
+                        Text(category['name'] as String),
                       ],
                     ),
                     selected: isSelected,
                     onSelected: (selected) {
-                      setState(() => _selectedCategory = category['id']!);
+                      setState(() => _selectedCategory = category['id'] as String);
                     },
                     selectedColor: AppColors.primary.withValues(alpha: 0.2),
-                    backgroundColor: isDark
-                        ? AppColors.darkSurface
-                        : AppColors.textLight,
+                    backgroundColor: AppColors.darkSurface,
                     labelStyle: TextStyle(
-                      color: isSelected
-                          ? AppColors.primary
-                          : AppColors.textGrey,
-                      fontWeight: isSelected
-                          ? FontWeight.w600
-                          : FontWeight.normal,
+                      color: isSelected ? AppColors.primary : AppColors.textGrey,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                     ),
                     side: BorderSide(
-                      color: isSelected
-                          ? AppColors.primary
-                          : AppColors.textGrey.withValues(alpha: 0.3),
+                      color: isSelected ? AppColors.primary : AppColors.textGrey.withValues(alpha: 0.3),
                     ),
                   );
                 }).toList(),
               ),
               const SizedBox(height: 24),
-
               CustomButton(
                 text: 'Publish',
                 onPressed: () => _publishNews(userProvider),
@@ -613,7 +528,6 @@ class _AddNewsBottomSheetState extends State<_AddNewsBottomSheet> {
     );
 
     context.read<NewsProvider>().addNews(news);
-
     Navigator.pop(context);
 
     ScaffoldMessenger.of(context).showSnackBar(

@@ -2,29 +2,38 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../data/providers.dart';
+import '../utils/validator.dart';
 
 import '../theme/colors.dart';
-import '../theme/constants.dart';
 import '../theme/custom_button.dart';
 import '../theme/custom_text_field.dart';
 
-class AuthScreen extends StatelessWidget {
-  const AuthScreen({super.key});
+class RegisterScreen extends StatelessWidget {
+  const RegisterScreen({super.key});
+
+  static const Map<String, List<String>> collegesWithGroups = {
+    'AITU': ['ПО2303', 'ПО2301', 'ПО2306'],
+    'KILC': ['K-1', 'K-2', 'K-3'],
+    'Turan': ['Т-1', 'Т-2', 'Т-3'],
+    'Urban College': ['U-1', 'U-2', 'U-3'],
+    'Astana Polytechnic': ['P-1', 'P-2', 'P-3'],
+    'College of Service and Tourism': ['C-1', 'C-2', 'C-3'],
+  };
 
   @override
   Widget build(BuildContext context) {
-    return const _AuthForm();
+    return const _RegisterForm();
   }
 }
 
-class _AuthForm extends StatefulWidget {
-  const _AuthForm();
+class _RegisterForm extends StatefulWidget {
+  const _RegisterForm();
 
   @override
-  State<_AuthForm> createState() => _AuthFormState();
+  State<_RegisterForm> createState() => _RegisterFormState();
 }
 
-class _AuthFormState extends State<_AuthForm> {
+class _RegisterFormState extends State<_RegisterForm> {
   final _formKey = GlobalKey<FormState>();
 
   final _nameController = TextEditingController();
@@ -48,8 +57,8 @@ class _AuthFormState extends State<_AuthForm> {
   @override
   void initState() {
     super.initState();
-    _college = AppConstants.collegesWithGroups.keys.first;
-    _currentGroups = AppConstants.collegesWithGroups[_college]!;
+    _college = RegisterScreen.collegesWithGroups.keys.first;
+    _currentGroups = RegisterScreen.collegesWithGroups[_college]!;
     _selectedGroup = _currentGroups.first;
 
     _checkHeadmanAvailability();
@@ -59,15 +68,15 @@ class _AuthFormState extends State<_AuthForm> {
     if (_selectedGroup == null) return;
 
     final bool isTaken = await context.read<UserProvider>().checkGroupHeadman(
-    _college,
-    _selectedGroup!,
-    );
+          _college,
+          _selectedGroup!,
+        );
 
     setState(() {
-    _isHeadmanTaken = isTaken;
-    if (_isHeadmanTaken && _role == 'headman') {
+      _isHeadmanTaken = isTaken;
+      if (_isHeadmanTaken && _role == 'headman') {
         _role = 'student';
-    }
+      }
     });
   }
 
@@ -90,14 +99,14 @@ class _AuthFormState extends State<_AuthForm> {
     setState(() => _isLoading = true);
 
     try {
-      await context.read<UserProvider>().authorize(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-        name: _nameController.text.trim(),
-        college: _college,
-        group: _selectedGroup!,
-        role: _role,
-      );
+      await context.read<UserProvider>().register(
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+            name: _nameController.text.trim(),
+            college: _college,
+            group: _selectedGroup!,
+            role: _role,
+          );
 
       if (mounted) context.go('/home');
     } catch (e) {
@@ -115,7 +124,7 @@ class _AuthFormState extends State<_AuthForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Authorization'),
+        title: const Text('Registration'),
         centerTitle: true,
       ),
       body: Form(
@@ -153,7 +162,6 @@ class _AuthFormState extends State<_AuthForm> {
                 ],
               ),
               const SizedBox(height: 25),
-
               DropdownButtonFormField<String>(
                 initialValue: _college,
                 isExpanded: true,
@@ -161,14 +169,14 @@ class _AuthFormState extends State<_AuthForm> {
                   labelText: 'College',
                   prefixIcon: Icon(Icons.school_outlined),
                 ),
-                items: AppConstants.collegesWithGroups.keys.map((coll) {
+                items: RegisterScreen.collegesWithGroups.keys.map((coll) {
                   return DropdownMenuItem(value: coll, child: Text(coll));
                 }).toList(),
                 onChanged: (value) {
                   if (value != null) {
                     setState(() {
                       _college = value;
-                      _currentGroups = AppConstants.collegesWithGroups[_college]!;
+                      _currentGroups = RegisterScreen.collegesWithGroups[_college]!;
                       _selectedGroup = _currentGroups.first;
                     });
                     _checkHeadmanAvailability();
@@ -176,7 +184,6 @@ class _AuthFormState extends State<_AuthForm> {
                 },
               ),
               const SizedBox(height: 20),
-
               DropdownButtonFormField<String>(
                 initialValue: _selectedGroup,
                 isExpanded: true,
@@ -191,31 +198,25 @@ class _AuthFormState extends State<_AuthForm> {
                   setState(() => _selectedGroup = value);
                   _checkHeadmanAvailability();
                 },
-                validator: (value) => value == null ? 'Choose your group' : null,
+                validator: (value) =>
+                    value == null ? 'Choose your group' : null,
               ),
-
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 20),
                 child: Divider(),
               ),
-
               CustomTextField(
                 label: 'Full name',
                 hint: '...',
                 controller: _nameController,
                 focusNode: _nameFocus,
                 textInputAction: TextInputAction.next,
-                onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(_emailFocus),
+                onFieldSubmitted: (_) =>
+                    FocusScope.of(context).requestFocus(_emailFocus),
                 prefixIcon: const Icon(Icons.person_outline_rounded),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Enter your full name';
-                  final words = value.trim().split(RegExp(r'\s+'));
-                  if (words.length < 2) return 'Last name and first name are required';
-                  return null;
-                },
+                validator: (value) => Validator.validateName(value),
               ),
               const SizedBox(height: 20),
-
               CustomTextField(
                 label: 'E-mail',
                 hint: '...',
@@ -223,16 +224,12 @@ class _AuthFormState extends State<_AuthForm> {
                 focusNode: _emailFocus,
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
-                onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(_passFocus),
+                onFieldSubmitted: (_) =>
+                    FocusScope.of(context).requestFocus(_passFocus),
                 prefixIcon: const Icon(Icons.email_outlined),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Enter e-mail';
-                  if (!RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(value)) return 'Incorrect e-mail';
-                  return null;
-                },
+                validator: (value) => Validator.validateEmail(value),
               ),
               const SizedBox(height: 20),
-
               CustomTextField(
                 label: 'Password',
                 hint: '...',
@@ -240,18 +237,12 @@ class _AuthFormState extends State<_AuthForm> {
                 controller: _passwordController,
                 focusNode: _passFocus,
                 textInputAction: TextInputAction.next,
-                onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(_confirmPassFocus),
+                onFieldSubmitted: (_) =>
+                    FocusScope.of(context).requestFocus(_confirmPassFocus),
                 prefixIcon: const Icon(Icons.lock_outline_rounded),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Enter password';
-                  if (value.length < 8) return 'Must contain at least 8 characters';
-                  if (!RegExp(r'[A-Z]').hasMatch(value)) return 'At least one capital letter';
-                  if (!RegExp(r'[!@#\$%\^&\*\(\)_\+\-=\[\]\{\};:"\\|,.<>\/?]').hasMatch(value)) return 'At least one special symbol';
-                  return null;
-                },
+                validator: (value) => Validator.validatePassword(value),
               ),
               const SizedBox(height: 20),
-
               CustomTextField(
                 label: 'Confirm password',
                 hint: '...',
@@ -260,13 +251,12 @@ class _AuthFormState extends State<_AuthForm> {
                 focusNode: _confirmPassFocus,
                 textInputAction: TextInputAction.done,
                 prefixIcon: const Icon(Icons.lock_reset_rounded),
-                validator: (value) {
-                  if (value != _passwordController.text) return 'The passwords do not match';
-                  return null;
-                },
+                validator: (value) => Validator.validateConfirmPassword(
+                  value,
+                  _passwordController.text,
+                ),
               ),
               const SizedBox(height: 32),
-
               CustomButton(
                 text: 'Create an account',
                 onPressed: _register,
@@ -274,7 +264,6 @@ class _AuthFormState extends State<_AuthForm> {
                 icon: Icons.person_add_alt_1_rounded,
               ),
               const SizedBox(height: 10),
-
               Center(
                 child: TextButton(
                   onPressed: () => context.go('/login'),
@@ -282,8 +271,8 @@ class _AuthFormState extends State<_AuthForm> {
                     text: TextSpan(
                       text: 'Already have an account? ',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textGrey,
-                      ),
+                            color: AppColors.textGrey,
+                          ),
                       children: [
                         TextSpan(
                           text: 'Log In',
@@ -322,8 +311,6 @@ class _RoleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -333,14 +320,12 @@ class _RoleCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? AppColors.primary.withValues(alpha: 0.1)
-              : (isDark ? AppColors.darkSurface : AppColors.textLight),
+              : AppColors.darkSurface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
                 ? AppColors.primary
-                : (isDark
-                    ? AppColors.textGrey.withValues(alpha: 0.2)
-                    : AppColors.divider),
+                : AppColors.textGrey.withValues(alpha: 0.2),
             width: isSelected ? 2 : 1,
           ),
         ),

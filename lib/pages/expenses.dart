@@ -5,11 +5,33 @@ import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 import '../theme/colors.dart';
-import '../theme/constants.dart';
 import '../theme/custom_button.dart';
 import '../theme/custom_text_field.dart';
 import '../data/models.dart';
 import '../data/providers.dart';
+
+class ExpenseCategory {
+  final String id;
+  final String name;
+  final IconData icon;
+
+  const ExpenseCategory({
+    required this.id,
+    required this.name,
+    required this.icon,
+  });
+}
+
+const List<ExpenseCategory> _categories = [
+  ExpenseCategory(id: 'transport', name: 'Transport', icon: Icons.directions_bus_rounded),
+  ExpenseCategory(id: 'food', name: 'Food', icon: Icons.restaurant_rounded),
+  ExpenseCategory(id: 'books', name: 'Books', icon: Icons.menu_book_rounded),
+  ExpenseCategory(id: 'housing', name: 'Housing', icon: Icons.home_rounded),
+  ExpenseCategory(id: 'entertainment', name: 'Entertainment', icon: Icons.sports_esports_rounded),
+  ExpenseCategory(id: 'health', name: 'Health', icon: Icons.medical_services_rounded),
+  ExpenseCategory(id: 'clothing', name: 'Clothing', icon: Icons.checkroom_rounded),
+  ExpenseCategory(id: 'communication', name: 'Communication', icon: Icons.stay_current_portrait_rounded),
+];
 
 class ExpensesScreen extends StatefulWidget {
   const ExpensesScreen({super.key});
@@ -66,6 +88,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
         children: const [_StatisticsTab(), _HistoryTab()],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: "add_expense_btn",
         onPressed: () => _showAddExpenseDialog(context),
         icon: const Icon(Icons.add_rounded),
         label: const Text('Add'),
@@ -102,11 +125,9 @@ class _StatisticsTab extends StatelessWidget {
         children: [
           _TotalAmountCard(totalAmount: totalAmount),
           const SizedBox(height: 32),
-
           _sectionTitle(context, 'Expenses by category'),
           const SizedBox(height: 16),
           _PieChartWidget(expensesByCategory: expensesByCategory),
-
           const SizedBox(height: 32),
           _sectionTitle(context, 'Activity schedule'),
           const SizedBox(height: 16),
@@ -121,10 +142,10 @@ class _StatisticsTab extends StatelessWidget {
     return Text(
       title,
       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-        fontWeight: FontWeight.bold,
-        color: AppColors.textGrey,
-        letterSpacing: 0.5,
-      ),
+            fontWeight: FontWeight.bold,
+            color: AppColors.textGrey,
+            letterSpacing: 0.5,
+          ),
     );
   }
 }
@@ -135,18 +156,17 @@ class _TotalAmountCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final currencyFormat = NumberFormat('#,###', 'en_US');
 
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : Colors.white,
+        color: AppColors.darkSurface,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -166,7 +186,7 @@ class _TotalAmountCard extends StatelessWidget {
               Text(
                 '${currencyFormat.format(totalAmount).replaceAll(',', ' ')} ₸',
                 style: TextStyle(
-                  color: isDark ? Colors.white : AppColors.textDark,
+                  color: Colors.white,
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
                 ),
@@ -193,7 +213,6 @@ class _PieChartWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final sortedEntries = expensesByCategory.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
@@ -201,7 +220,7 @@ class _PieChartWidget extends StatelessWidget {
       height: 220,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : Colors.white,
+        color: AppColors.darkSurface,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Row(
@@ -237,7 +256,7 @@ class _PieChartWidget extends StatelessWidget {
   }
 
   Widget _buildLegendItem(BuildContext context, MapEntry<String, double> entry) {
-    final cat = AppConstants.expenseCategories.firstWhere((c) => c['id'] == entry.key);
+    final cat = _categories.firstWhere((c) => c.id == entry.key);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -246,7 +265,7 @@ class _PieChartWidget extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              cat['name']!,
+              cat.name,
               style: const TextStyle(fontSize: 12, overflow: TextOverflow.ellipsis),
             ),
           ),
@@ -272,15 +291,13 @@ class _LineChartWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     final spots = expenses.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.amount)).toList();
 
     return Container(
       height: 200,
       padding: const EdgeInsets.only(top: 24, right: 24, left: 8, bottom: 12),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : Colors.white,
+        color: AppColors.darkSurface,
         borderRadius: BorderRadius.circular(24),
       ),
       child: LineChart(
@@ -320,9 +337,7 @@ class _HistoryTab extends StatelessWidget {
     final expenseProvider = context.watch<ExpenseProvider>();
     final expenses = expenseProvider.expenses;
 
-    if (expenses.isEmpty) {
-      return _EmptyExpenses();
-    }
+    if (expenses.isEmpty) return _EmptyExpenses();
 
     final Map<String, List<ExpenseModel>> groupedExpenses = {};
     for (var expense in expenses) {
@@ -346,10 +361,7 @@ class _HistoryTab extends StatelessWidget {
       itemBuilder: (context, index) {
         final date = sortedDates[index];
         final dayExpenses = groupedExpenses[date]!;
-        final dayTotal = dayExpenses.fold<double>(
-          0,
-          (sum, expense) => sum + expense.amount,
-        );
+        final dayTotal = dayExpenses.fold<double>(0, (sum, expense) => sum + expense.amount);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -359,26 +371,18 @@ class _HistoryTab extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    date,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  Text(date, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
                   Text(
                     '${dayTotal.toStringAsFixed(0)} ₸',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
-                    ),
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
+                        ),
                   ),
                 ],
               ),
             ),
-
-            ...dayExpenses.map(
-              (expense) => _ExpenseHistoryCard(expense: expense),
-            ),
+            ...dayExpenses.map((expense) => _ExpenseHistoryCard(expense: expense)),
             const SizedBox(height: 8),
           ],
         );
@@ -393,26 +397,33 @@ class _ExpenseHistoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cat = AppConstants.expenseCategories.firstWhere((c) => c['id'] == expense.category);
+    final cat = _categories.firstWhere((c) => c.id == expense.category,
+        orElse: () => _categories.first);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : Colors.white,
+        color: AppColors.darkSurface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.textGrey.withValues(alpha: 0.05)),
       ),
       child: Row(
         children: [
-          Text(cat['emoji']!, style: const TextStyle(fontSize: 24)),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(cat.icon, color: AppColors.primary, size: 24),
+          ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(cat['name']!, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text(cat.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 if (expense.note != null)
                   Text(expense.note!, style: const TextStyle(color: AppColors.textGrey, fontSize: 12)),
               ],
@@ -468,16 +479,12 @@ class _AddExpenseBottomSheetState extends State<_AddExpenseBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.textLight,
+        color: AppColors.darkSurface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Form(
@@ -494,60 +501,41 @@ class _AddExpenseBottomSheetState extends State<_AddExpenseBottomSheet> {
                       color: AppColors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(
-                      Icons.add_circle_rounded,
-                      color: AppColors.primary,
-                    ),
+                    child: const Icon(Icons.add_circle_rounded, color: AppColors.primary),
                   ),
                   const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Add',
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded),
-                    onPressed: () => Navigator.pop(context),
-                  ),
+                  Expanded(child: Text('Add', style: Theme.of(context).textTheme.headlineSmall)),
+                  IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(context)),
                 ],
               ),
               const SizedBox(height: 24),
-
               CustomTextField(
                 label: 'Amount',
                 hint: '...',
                 controller: _amountController,
                 keyboardType: TextInputType.number,
-                prefixIcon: Padding(padding: EdgeInsets.all(12), child: Text('₸', style: TextStyle(fontSize: 20))),
+                prefixIcon: const Padding(padding: EdgeInsets.all(12), child: Text('₸', style: TextStyle(fontSize: 20))),
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Enter amount';
-                  }
-                  if (int.tryParse(value) == null || int.parse(value) <= 0) {
-                    return 'Enter the correct amount';
-                  }
+                  if (value == null || value.isEmpty) return 'Enter amount';
+                  if (int.tryParse(value) == null || int.parse(value) <= 0) return 'Enter the correct amount';
                   return null;
                 },
               ),
               const SizedBox(height: 16),
-
               Text(
                 'Category',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? AppColors.textLight : AppColors.textDark,
-                ),
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textLight,
+                    ),
               ),
               const SizedBox(height: 8),
               _CategorySelector(
                 selectedCategory: _selectedCategory,
-                onCategoryChanged: (category) =>
-                    setState(() => _selectedCategory = category),
+                onCategoryChanged: (category) => setState(() => _selectedCategory = category),
               ),
               const SizedBox(height: 16),
-
               CustomTextField(
                 label: 'Description (optional)',
                 hint: '...',
@@ -556,13 +544,11 @@ class _AddExpenseBottomSheetState extends State<_AddExpenseBottomSheet> {
                 prefixIcon: const Icon(Icons.note_rounded),
               ),
               const SizedBox(height: 16),
-
               _DateSelector(
                 selectedDate: _selectedDate,
                 onDateChanged: (date) => setState(() => _selectedDate = date),
               ),
               const SizedBox(height: 24),
-
               CustomButton(
                 text: 'Add',
                 onPressed: _saveExpense,
@@ -577,7 +563,6 @@ class _AddExpenseBottomSheetState extends State<_AddExpenseBottomSheet> {
 
   void _saveExpense() async {
     if (!_formKey.currentState!.validate()) return;
-
     final user = context.read<UserProvider>().user;
     if (user == null) return;
 
@@ -595,9 +580,7 @@ class _AddExpenseBottomSheetState extends State<_AddExpenseBottomSheet> {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            '✅ ${expense.amount.toStringAsFixed(0)}₸ expense added',
-          ),
+          content: Text('✅ ${expense.amount.toStringAsFixed(0)}₸ expense added'),
           backgroundColor: AppColors.success,
           behavior: SnackBarBehavior.floating,
         ),
@@ -610,10 +593,7 @@ class _CategorySelector extends StatelessWidget {
   final String selectedCategory;
   final ValueChanged<String> onCategoryChanged;
 
-  const _CategorySelector({
-    required this.selectedCategory,
-    required this.onCategoryChanged,
-  });
+  const _CategorySelector({required this.selectedCategory, required this.onCategoryChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -626,42 +606,42 @@ class _CategorySelector extends StatelessWidget {
         crossAxisSpacing: 8,
         mainAxisSpacing: 8,
       ),
-      itemCount: AppConstants.expenseCategories.length,
+      itemCount: _categories.length,
       itemBuilder: (context, index) {
-        final category = AppConstants.expenseCategories[index];
-        final isSelected = selectedCategory == category['id'];
+        final category = _categories[index];
+        final isSelected = selectedCategory == category.id;
 
         return InkWell(
-          onTap: () => onCategoryChanged(category['id']!),
+          onTap: () => onCategoryChanged(category.id),
           borderRadius: BorderRadius.circular(12),
           child: Container(
             decoration: BoxDecoration(
               color: isSelected
                   ? AppColors.primary.withValues(alpha: 0.1)
                   : (Theme.of(context).brightness == Brightness.dark
-                        ? AppColors.darkBackground
-                        : AppColors.darkBackground),
+                      ? AppColors.darkBackground
+                      : Colors.grey.shade100),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isSelected
-                    ? AppColors.primary
-                    : AppColors.textGrey.withValues(alpha: 0.2),
+                color: isSelected ? AppColors.primary : AppColors.textGrey.withValues(alpha: 0.2),
                 width: isSelected ? 2 : 1,
               ),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(category['emoji']!, style: const TextStyle(fontSize: 28)),
+                Icon(
+                  category.icon,
+                  size: 28,
+                  color: isSelected ? AppColors.primary : AppColors.textGrey,
+                ),
                 const SizedBox(height: 4),
                 Text(
-                  category['name']!,
+                  category.name,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontSize: 10,
-                    fontWeight: isSelected
-                        ? FontWeight.w600
-                        : FontWeight.normal,
-                  ),
+                        fontSize: 10,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      ),
                   textAlign: TextAlign.center,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -679,73 +659,46 @@ class _DateSelector extends StatelessWidget {
   final DateTime selectedDate;
   final ValueChanged<DateTime> onDateChanged;
 
-  const _DateSelector({
-    required this.selectedDate,
-    required this.onDateChanged,
-  });
+  const _DateSelector({required this.selectedDate, required this.onDateChanged});
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Date',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: isDark ? AppColors.textLight : AppColors.textDark,
-          ),
+                fontWeight: FontWeight.w600,
+                color: AppColors.textLight,
+              ),
         ),
         const SizedBox(height: 8),
         InkWell(
           onTap: () async {
             final pickedDate = await showDatePicker(
               context: context,
-              initialDate: DateTime.now(),
+              initialDate: selectedDate,
               firstDate: DateTime(2000),
               lastDate: DateTime(2100),
-              builder: (BuildContext context, Widget? child) {
-                return Theme(
-                  data: Theme.of(context).copyWith(
-                    colorScheme: ColorScheme.light(
-                      primary: Colors.deepPurple,
-                      onPrimary: Colors.white,
-                      onSurface: Colors.black,
-                    ),
-                  ),
-                  child: child!,
-                );
-              },
             );
-
-            if (pickedDate != null) {
-              onDateChanged(pickedDate);
-            }
+            if (pickedDate != null) onDateChanged(pickedDate);
           },
           borderRadius: BorderRadius.circular(12),
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurface : AppColors.darkBackground,
+              color: AppColors.darkSurface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppColors.textGrey.withValues(alpha: 0.3),
-              ),
+              border: Border.all(color: AppColors.textGrey.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
-                const Icon(
-                  Icons.calendar_today_rounded,
-                  color: AppColors.primary,
-                ),
+                const Icon(Icons.calendar_today_rounded, color: AppColors.primary),
                 const SizedBox(width: 12),
                 Text(
                   DateFormat('d MMMM yyyy', 'en_US').format(selectedDate),
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
                 ),
               ],
             ),

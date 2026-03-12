@@ -19,10 +19,11 @@ class _NotesScreenState extends State<NotesScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final userId = context.read<UserProvider>().user?.id;
-      if (userId != null) {
-        context.read<NotesProvider>().loadNotes(userId);
+    Future.microtask(() async {
+      if (!mounted) return;
+      final user = context.read<UserProvider>().user;
+      if (user != null) {
+        context.read<NotesProvider>().loadNotes(user.id);
       }
     });
   }
@@ -46,6 +47,7 @@ class _NotesScreenState extends State<NotesScreen> {
               },
             ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: "add_note_btn",
         onPressed: () => _showNoteDialog(context),
         icon: const Icon(Icons.add_rounded),
         label: const Text('Add'),
@@ -70,18 +72,17 @@ class _NoteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final userId = context.read<UserProvider>().user?.id;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Container(
         decoration: BoxDecoration(
-          color: isDark ? AppColors.darkSurface : AppColors.textLight,
+          color: AppColors.darkSurface,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+              color: Colors.black.withValues(alpha: 0.3),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -165,7 +166,6 @@ class _NoteEditorSheetState extends State<_NoteEditorSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final userId = context.read<UserProvider>().user?.id;
 
     return Container(
@@ -174,7 +174,7 @@ class _NoteEditorSheetState extends State<_NoteEditorSheet> {
         top: 24, left: 24, right: 24,
       ),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.textLight,
+        color: AppColors.darkSurface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Form(

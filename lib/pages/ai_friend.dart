@@ -21,10 +21,11 @@ class _AIScreenState extends State<AIScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final userProvider = context.read<UserProvider>();
-      if (userProvider.user != null) {
-        context.read<ChatProvider>().loadChatHistory(userProvider.user!.id);
+    Future.microtask(() async {
+      if (!mounted) return;
+      final user = context.read<UserProvider>().user;
+      if (user != null) {
+        await context.read<ChatProvider>().loadChatHistory(user.id);
       }
     });
   }
@@ -209,7 +210,6 @@ class _AIMessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isMe = message.isMe;
 
     return Padding(
@@ -232,9 +232,7 @@ class _AIMessageBubble extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: isMe
                             ? AppColors.primary
-                            : (isDark
-                                  ? AppColors.darkSurface
-                                  : AppColors.darkBackground),
+                            : AppColors.darkSurface,
                         borderRadius: BorderRadius.only(
                           topLeft: const Radius.circular(20),
                           topRight: const Radius.circular(20),
@@ -248,7 +246,7 @@ class _AIMessageBubble extends StatelessWidget {
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(
-                              alpha: isDark ? 0.3 : 0.05,
+                              alpha: 0.3,
                             ),
                             blurRadius: 10,
                             offset: const Offset(0, 2),
@@ -310,8 +308,6 @@ class _AIMessageBubble extends StatelessWidget {
 class _TypingIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
@@ -321,7 +317,7 @@ class _TypingIndicator extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurface : AppColors.darkBackground,
+              color: AppColors.darkSurface,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
@@ -418,12 +414,10 @@ class _AIMessageInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.textLight,
+        color: AppColors.darkSurface,
         border: Border(
           top: BorderSide(
             color: AppColors.divider.withValues(alpha: 0.5),

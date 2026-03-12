@@ -14,29 +14,18 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = true;
-  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _loadUser();
+    _initUser();
   }
 
-  Future<void> _loadUser() async {
-    final userProvider = context.read<UserProvider>();
-
-    try {
-      final userModel = await userProvider.fetchUserData();
-      if (userModel != null) {
-        userProvider.setUser(userModel);
-      } else {
-        setState(() => _error = 'The user was not found in the database.');
-      }
-    } catch (e) {
-      setState(() => _error = 'Error loading profile: $e');
+  Future<void> _initUser() async {
+    await context.read<UserProvider>().fetchUserData();
+    if (mounted) {
+      setState(() => _isLoading = false);
     }
-
-    setState(() => _isLoading = false);
   }
 
   @override
@@ -46,20 +35,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (_isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
-    if (_error != null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Profile')),
-        body: Center(child: Text(_error!)),
-      );
-    }
-
-    if (user == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Profile')),
-        body: const Center(child: Text('No user data')),
-      );
     }
 
     return Scaffold(
@@ -88,8 +63,11 @@ class _ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (user == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       width: double.infinity,
@@ -98,7 +76,7 @@ class _ProfileHeader extends StatelessWidget {
         gradient: LinearGradient(
           colors: [
             theme.scaffoldBackgroundColor,
-            isDark ? AppColors.darkSurface : Colors.white,
+            AppColors.darkSurface,
           ],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
@@ -113,7 +91,7 @@ class _ProfileHeader extends StatelessWidget {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withValues(alpha: isDark ? 0.15 : 0.1),
+                  color: AppColors.primary.withValues(alpha: 0.15),
                   blurRadius: 30,
                   spreadRadius: 5,
                 ),
@@ -122,13 +100,13 @@ class _ProfileHeader extends StatelessWidget {
                 color: AppColors.primary.withValues(alpha: 0.2),
                 width: 2,
               ),
-              color: isDark ? AppColors.darkSurfaceVariant : Colors.grey[100],
+              color: AppColors.darkSurfaceVariant,
             ),
             child: Center(
               child: Text(
                 _getInitials(user.name),
                 style: TextStyle(
-                  color: isDark ? AppColors.primaryDark : AppColors.primary,
+                  color: AppColors.primaryDark,
                   fontSize: 48,
                   fontWeight: FontWeight.bold,
                   letterSpacing: -1,
@@ -152,14 +130,14 @@ class _ProfileHeader extends StatelessWidget {
               children: [
                 Icon(
                   user.isHeadman ? Icons.stars_rounded : Icons.school_rounded,
-                  color: isDark ? AppColors.primaryDark : AppColors.primary,
+                  color: AppColors.primaryDark,
                   size: 18,
                 ),
                 const SizedBox(width: 8),
                 Text(
                   user.isHeadman ? '${user.groupName} Headman' : '${user.groupName} Student',
                   style: TextStyle(
-                    color: isDark ? AppColors.primaryDark : AppColors.primary,
+                    color: AppColors.primaryDark,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
@@ -192,17 +170,15 @@ class _ProfileInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.textLight,
+        color: AppColors.darkSurface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -291,17 +267,15 @@ class _InfoRow extends StatelessWidget {
 class _ActionsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.textLight,
+        color: AppColors.darkSurface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -446,19 +420,8 @@ class _ActionsSection extends StatelessWidget {
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
-
-              try {
-                if (!context.mounted) return;
-                context.read<UserProvider>().logout();
-
-                if (context.mounted) {
-                  context.go('/auth');
-                }
-              } catch (e) {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text('Account logout error: $e')));
-              }
+              context.read<UserProvider>().logout();
+              context.go('/register');
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
             child: const Text('Log out'),

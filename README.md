@@ -1,5 +1,5 @@
 <div align="center">
-  <img alt="Campus911-Logo" src="README_icon.png" weight=200 height=200 />
+  <img alt="Campus911-Logo" src="assets/images/ai_bot.png" weight=200 height=200 />
   <h1 padding=>Campus911</h1>
 </div>
 
